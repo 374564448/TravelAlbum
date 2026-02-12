@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Album - 管理后台</title>
+  <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1/dist/cropper.min.css">
+</head>
+<body>
+
+  <!-- ===== 登录页 ===== -->
+  <div id="login-page" class="page active">
+    <div class="login-card">
+      <h1>Travel Album</h1>
+      <p class="subtitle">管理后台</p>
+      <div class="form-group">
+        <input type="text" id="login-username" placeholder="请输入账号" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <input type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button id="login-btn" class="btn btn-primary btn-block">登 录</button>
+      <p id="login-error" class="error-text"></p>
+    </div>
+  </div>
+
+  <!-- ===== 主页面 ===== -->
+  <div id="main-page" class="page">
+
+    <!-- 顶部导航 -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <h2 id="page-title">地点管理</h2>
+        <button id="back-btn" class="btn btn-ghost" style="display:none;">← 返回</button>
+      </div>
+      <div class="top-bar-right">
+        <button id="logout-btn" class="btn btn-ghost">退出登录</button>
+      </div>
+    </header>
+
+    <!-- 地点列表视图 -->
+    <div id="locations-view" class="view active">
+      <div class="toolbar">
+        <button id="add-location-btn" class="btn btn-primary">+ 新增地点</button>
+      </div>
+      <div id="locations-list" class="card-grid"></div>
+    </div>
+
+    <!-- 照片管理视图 -->
+    <div id="photos-view" class="view">
+      <div class="toolbar">
+        <div class="upload-area" id="upload-area">
+          <input type="file" id="photo-upload" multiple accept="image/*" hidden>
+          <p>将照片拖拽到此处，或 <button class="btn btn-primary btn-sm" id="upload-btn">点击上传</button></p>
+        </div>
+      </div>
+      <div id="photos-list" class="photo-grid"></div>
+    </div>
+
+  </div>
+
+  <!-- ===== 模态框：新增/编辑地点 ===== -->
+  <div id="location-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-body">
+      <h3 id="location-modal-title">新增地点</h3>
+      <div class="form-group">
+        <label>地点名称</label>
+        <input type="text" id="loc-title" placeholder="请输入地点名称">
+      </div>
+      <div class="form-group">
+        <label>封面照片</label>
+        <div class="cover-upload-area" id="cover-upload-area">
+          <input type="file" id="loc-cover" accept="image/*" hidden>
+          <img id="cover-preview" src="" alt="" style="display:none;">
+          <p id="cover-placeholder">点击选择封面照片</p>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="loc-cancel">取消</button>
+        <button class="btn btn-primary" id="loc-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：编辑照片 ===== -->
+  <div id="photo-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-body">
+      <h3>编辑照片</h3>
+      <div class="form-group">
+        <label>照片标题</label>
+        <input type="text" id="photo-title" placeholder="照片标题（可选）">
+      </div>
+      <div class="form-group">
+        <label>照片描述</label>
+        <textarea id="photo-desc" rows="3" placeholder="照片描述（可选）"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="photo-cancel">取消</button>
+        <button class="btn btn-primary" id="photo-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：图片裁剪 ===== -->
+  <div id="crop-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-body crop-modal-body">
+      <h3>裁剪封面照片</h3>
+      <p class="crop-hint">请拖动选框调整裁剪区域（固定比例 230:340）</p>
+      <div class="crop-container">
+        <img id="crop-image" src="" alt="裁剪预览">
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="crop-cancel">取消</button>
+        <button class="btn btn-primary" id="crop-confirm">确定上传</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast 提示 ===== -->
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1/dist/cropper.min.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

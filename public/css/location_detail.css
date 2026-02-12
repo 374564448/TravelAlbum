@@ -1,0 +1,528 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0a;
+  min-height: 100vh;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  user-select: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* ===== 樱花飘落背景 ===== */
+canvas#sakura {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ===== 顶部标题栏 ===== */
+.detail-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  padding: 18px 30px;
+  background: linear-gradient(to bottom, rgba(10, 10, 10, 0.9) 0%, rgba(10, 10, 10, 0) 100%);
+  opacity: 0;
+  transition: opacity 1.5s ease-in;
+}
+
+.detail-header.loaded {
+  opacity: 1;
+}
+
+.back-btn {
+  color: rgba(0, 195, 255, 0.8);
+  text-decoration: none;
+  font-size: 15px;
+  letter-spacing: 1px;
+  transition: color 0.3s;
+  flex-shrink: 0;
+}
+
+.back-btn:hover {
+  color: rgba(0, 195, 255, 1);
+}
+
+.detail-title {
+  flex: 1;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  margin-right: 50px; /* 平衡返回按钮的宽度，使标题视觉居中 */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 0 10px rgba(0, 195, 255, 0.15);
+}
+
+/* ===== 照片网格 ===== */
+.photo-grid {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 90px 30px 60px;
+  opacity: 0;
+  transition: opacity 1.5s ease-in 0.3s;
+}
+
+.photo-grid.loaded {
+  opacity: 1;
+}
+
+/* ===== 单张照片卡片（相框风格） ===== */
+.photo-card {
+  position: relative;
+  border-radius: 6px;
+  cursor: pointer;
+  /* 相框：白色边框 + 内阴影模拟画框质感 */
+  background: #fff;
+  padding: 10px 10px 0 10px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.5),
+    0 0 12px rgba(0, 195, 255, 0.06),
+    inset 0 0 6px rgba(0, 0, 0, 0.08);
+  /* 初始状态：透明 + 向上偏移 */
+  opacity: 0;
+  transform: rotate(var(--rotate, 0deg)) translateY(40px);
+  /* 入场动画过渡 */
+  transition: opacity 0.6s ease,
+              transform 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+              box-shadow 0.4s ease;
+}
+
+/* 入场完成后的状态 */
+.photo-card.show {
+  opacity: 1;
+  transform: rotate(var(--rotate, 0deg)) translateY(0);
+}
+
+.photo-card.show:hover {
+  transform: rotate(0deg) scale(1.04) translateY(0);
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(0, 195, 255, 0.15);
+  z-index: 20;
+}
+
+/* 图片区域 */
+.photo-card-img {
+  overflow: hidden;
+  border-radius: 3px;
+  line-height: 0;
+  position: relative;
+  min-width: 160px;
+  min-height: 220px;
+}
+
+.photo-card-img img {
+  display: block;
+  height: 220px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.photo-card-img img.img-loaded {
+  opacity: 1;
+}
+
+/* 骨架屏占位 */
+.skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(110deg, #e8e8e8 8%, #f5f5f5 18%, #e8e8e8 33%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton.hidden {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* 相框下栏（标题 + 描述） */
+.photo-card-footer {
+  padding: 8px 4px 10px;
+  text-align: center;
+  min-height: 32px;
+}
+
+.photo-card-title {
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+.photo-card-desc {
+  color: #888;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+/* 没有标题/描述时，底部也保留一点白色间距 */
+.photo-card:not(:has(.photo-card-footer)) {
+  padding-bottom: 10px;
+}
+
+/* ===== 照片卡片入场方向变体 ===== */
+.photo-card.enter-left {
+  transform: rotate(var(--rotate, 0deg)) translateX(-60px) translateY(20px);
+}
+.photo-card.enter-right {
+  transform: rotate(var(--rotate, 0deg)) translateX(60px) translateY(20px);
+}
+.photo-card.enter-left.show,
+.photo-card.enter-right.show {
+  opacity: 1;
+  transform: rotate(var(--rotate, 0deg)) translateX(0) translateY(0);
+}
+
+/* ===== 滚动进度条 ===== */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(0, 195, 255, 0.6), rgba(0, 195, 255, 1), rgba(0, 195, 255, 0.6));
+  z-index: 10000;
+  transition: width 0.08s linear;
+  box-shadow: 0 0 8px rgba(0, 195, 255, 0.4);
+  border-radius: 0 2px 2px 0;
+}
+
+/* ===== 照片放大查看层 ===== */
+.lightbox {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0);
+  pointer-events: none;
+  visibility: hidden;
+  transition: background 0.5s ease, visibility 0s linear 0.6s;
+  cursor: zoom-out;
+}
+
+.lightbox.active {
+  pointer-events: auto;
+  visibility: visible;
+  background: rgba(0, 0, 0, 0.85);
+  transition: background 0.5s ease, visibility 0s linear 0s;
+}
+
+.lightbox.closing {
+  visibility: visible;
+  pointer-events: none;
+  background: rgba(0, 0, 0, 0);
+  transition: background 0.8s ease, visibility 0s linear 1s;
+}
+
+/* ===== lightbox 相框容器 ===== */
+.lightbox-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(0, 195, 255, 0.1),
+    inset 0 0 8px rgba(0, 0, 0, 0.06);
+  /* 初始：从下方轻微上浮 */
+  transform: translateY(30px);
+  opacity: 0;
+  transition: transform 0.5s ease-out,
+              opacity 0.4s ease;
+  max-width: 90vw;
+  max-height: 92vh;
+  cursor: grab;
+}
+
+.lightbox-frame:active {
+  cursor: grabbing;
+}
+
+/* 打开：上浮到位 */
+.lightbox.active .lightbox-frame {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 关闭：缓慢下沉淡出 */
+.lightbox.closing .lightbox-frame {
+  transform: translateY(20px);
+  opacity: 0;
+  transition: transform 0.6s ease-in,
+              opacity 0.5s ease;
+}
+
+.lightbox-frame-img {
+  overflow: hidden;
+  border-radius: 4px;
+  line-height: 0;
+  position: relative;
+  min-width: 120px;
+  min-height: 120px;
+}
+
+.lightbox-img {
+  display: block;
+  max-width: 86vw;
+  max-height: 76vh;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+/* lightbox 相框下栏 */
+.lightbox-frame-footer {
+  padding: 8px 8px 4px;
+  text-align: center;
+}
+
+.lightbox-frame-title {
+  color: #333;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  line-height: 1.5;
+}
+
+.lightbox-frame-desc {
+  color: #888;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  margin-top: 3px;
+}
+
+/* footer 隐藏时不占空间 */
+.lightbox-frame-footer:empty {
+  display: none;
+}
+
+/* ===== Lightbox 照片计数 ===== */
+.lightbox-counter {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  letter-spacing: 2px;
+  font-weight: 500;
+  z-index: 10002;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.lightbox.active .lightbox-counter {
+  opacity: 1;
+}
+
+/* ===== 页面过渡遮罩 ===== */
+.page-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  z-index: 99999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+
+.page-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ===== 竖屏提示（仅移动端竖屏显示） ===== */
+.portrait-overlay {
+  display: none;
+}
+
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  .portrait-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
+    background: rgba(5, 5, 10, 0.96);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .portrait-icon {
+    width: 70px;
+    height: 70px;
+    animation: rotatePhone 2.4s ease-in-out infinite;
+  }
+
+  .portrait-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  @keyframes rotatePhone {
+    0%, 15% {
+      transform: rotate(0deg);
+    }
+    35%, 65% {
+      transform: rotate(90deg);
+    }
+    85%, 100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  .portrait-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    letter-spacing: 4px;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}
+
+/* ===== 首次滑动提示 ===== */
+.swipe-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  z-index: 10003;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+.swipe-hint.visible {
+  opacity: 1;
+}
+
+.swipe-hint.fade-out {
+  opacity: 0;
+}
+
+.swipe-hint-arrow {
+  font-size: 56px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 0 16px rgba(0, 195, 255, 0.6), 0 0 30px rgba(0, 195, 255, 0.3);
+  animation: swipeArrowBlink 1.2s ease-in-out infinite;
+}
+
+.swipe-hint-left {
+  animation-name: swipeArrowLeft;
+}
+
+.swipe-hint-right {
+  animation-name: swipeArrowRight;
+}
+
+@keyframes swipeArrowLeft {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes swipeArrowRight {
+  0%, 100% {
+    opacity: 0.3;
+    transform: translateX(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(10px);
+  }
+}
+
+.swipe-hint-text {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  text-shadow:
+    0 0 6px rgba(0, 195, 255, 0.9),
+    0 0 14px rgba(0, 195, 255, 0.7),
+    0 0 28px rgba(0, 195, 255, 0.5),
+    0 0 50px rgba(0, 195, 255, 0.3);
+  animation: neonPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes neonPulse {
+  0%, 100% {
+    text-shadow:
+      0 0 6px rgba(0, 195, 255, 0.9),
+      0 0 14px rgba(0, 195, 255, 0.7),
+      0 0 28px rgba(0, 195, 255, 0.5),
+      0 0 50px rgba(0, 195, 255, 0.3);
+  }
+  50% {
+    text-shadow:
+      0 0 8px rgba(0, 195, 255, 1),
+      0 0 20px rgba(0, 195, 255, 0.9),
+      0 0 40px rgba(0, 195, 255, 0.7),
+      0 0 70px rgba(0, 195, 255, 0.4),
+      0 0 100px rgba(0, 195, 255, 0.2);
+  }
+}

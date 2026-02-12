@@ -1,0 +1,570 @@
+/* ===== 全局 ===== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --primary: #4f6ef7;
+  --primary-hover: #3b5de7;
+  --danger: #e74c5a;
+  --danger-hover: #d43a48;
+  --bg: #f5f6fa;
+  --card-bg: #fff;
+  --text: #333;
+  --text-secondary: #888;
+  --border: #e2e5ee;
+  --radius: 10px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ===== 页面切换 ===== */
+.page { display: none; }
+.page.active { display: flex; }
+
+.view { display: none; width: 100%; }
+.view.active { display: block; }
+
+/* ===== 登录页 ===== */
+#login-page {
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-card {
+  background: #fff;
+  padding: 48px 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  width: 380px;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.login-card h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.login-card .subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.error-text {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: 12px;
+  min-height: 20px;
+}
+
+/* ===== 表单 ===== */
+.form-group {
+  margin-bottom: 16px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="password"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: var(--primary);
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--primary-hover); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover { background: var(--danger-hover); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+.btn-ghost:hover { color: var(--text); background: rgba(0,0,0,0.05); }
+
+.btn-block { width: 100%; padding: 12px; }
+
+.btn-sm { padding: 5px 12px; font-size: 13px; }
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+/* ===== 顶部导航 ===== */
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-bar h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* ===== 主页面 ===== */
+#main-page {
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.toolbar {
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ===== 地点卡片网格 ===== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.location-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  cursor: grab;
+  position: relative;
+}
+
+.location-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+
+.location-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.location-card .card-cover {
+  width: 100%;
+  aspect-ratio: 23 / 34;
+  object-fit: cover;
+  display: block;
+  background: #eee;
+}
+
+.location-card .card-cover-placeholder {
+  width: 100%;
+  aspect-ratio: 23 / 34;
+  background: linear-gradient(135deg, #e0e5ec, #d0d5dc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 40px;
+}
+
+.location-card .card-info {
+  padding: 14px 16px;
+}
+
+.location-card .card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.location-card .card-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.location-card .card-actions {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px 14px;
+}
+
+/* ===== 照片网格 ===== */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  padding: 0 24px 24px;
+}
+
+.photo-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  position: relative;
+  cursor: grab;
+  transition: transform 0.2s;
+}
+
+.photo-card:hover {
+  transform: translateY(-2px);
+}
+
+.photo-card.dragging {
+  opacity: 0.5;
+}
+
+.photo-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-card .photo-info {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.photo-card .photo-actions {
+  display: flex;
+  gap: 4px;
+  padding: 0 12px 8px;
+}
+
+/* ===== 上传区域 ===== */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+  transition: border-color 0.2s, background 0.2s;
+  color: var(--text-secondary);
+}
+
+.upload-area.drag-over {
+  border-color: var(--primary);
+  background: rgba(79, 110, 247, 0.05);
+}
+
+.upload-area p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ===== 封面上传 ===== */
+.cover-upload-area {
+  width: 100%;
+  aspect-ratio: 23 / 34;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.cover-upload-area:hover {
+  border-color: var(--primary);
+}
+
+.cover-upload-area img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cover-upload-area p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ===== 模态框 ===== */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+}
+
+.modal-body {
+  position: relative;
+  background: var(--card-bg);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  width: 440px;
+  max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-body h3 {
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+/* ===== Toast ===== */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: #333;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 2000;
+  opacity: 0;
+  transition: transform 0.3s, opacity 0.3s;
+  pointer-events: none;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ===== 加载状态 ===== */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ===== 上传进度 ===== */
+.upload-progress {
+  margin: 16px 24px;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.upload-progress .progress-bar {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.upload-progress .progress-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: 3px;
+  transition: width 0.3s;
+  width: 0;
+}
+
+.upload-progress .progress-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ===== 空状态 ===== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state .empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+/* ===== 图片裁剪模态框 ===== */
+.crop-modal-body {
+  width: 80vw;
+  max-width: 900px;
+}
+
+.crop-hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.crop-container {
+  margin: 0 auto;
+  border-radius: var(--radius);
+  overflow: hidden;
+  position: relative;
+}
+
+.crop-container img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Cropper.js 样式覆盖 */
+.cropper-view-box,
+.cropper-face {
+  border-radius: 0;
+}
+
+.cropper-line,
+.cropper-point {
+  background-color: var(--primary);
+}
+
+.cropper-modal {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* 裁剪预览尺寸提示 */
+.crop-size-info {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 640px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 0 10px 10px;
+  }
+  .location-card .card-info {
+    padding: 8px 10px;
+  }
+  .location-card .card-title {
+    font-size: 13px;
+    margin-bottom: 2px;
+  }
+  .location-card .card-meta {
+    font-size: 11px;
+  }
+  .location-card .card-actions {
+    padding: 0 10px 8px;
+    flex-wrap: wrap;
+  }
+  .location-card .card-actions .btn-sm {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+  .photo-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 0 12px 12px;
+  }
+  .toolbar {
+    padding: 12px;
+  }
+  .top-bar {
+    padding: 12px 16px;
+  }
+  .modal-body {
+    padding: 24px 20px;
+  }
+}

@@ -1,0 +1,502 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0a0a0a;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  cursor: default;
+  user-select: none;
+}
+
+/* ===== 页面加载渐入 ===== */
+canvas#starfield,
+canvas#skyfield,
+.main-container {
+  opacity: 0;
+  transition: opacity 2s ease-in;
+}
+
+canvas#starfield.loaded,
+canvas#skyfield.loaded,
+.main-container.loaded {
+  opacity: 1;
+}
+
+/* ===== 背景 Canvas ===== */
+canvas#starfield,
+canvas#skyfield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+
+/* 主题切换过渡 */
+body.theme-transitioning {
+  transition: background 1s ease;
+}
+
+body.theme-transitioning canvas#starfield,
+body.theme-transitioning canvas#skyfield {
+  transition: opacity 1s ease !important;
+}
+
+body.theme-transitioning .pulse-ring,
+body.theme-transitioning .glow-circle,
+body.theme-transitioning .hand-icon,
+body.theme-transitioning .tap-dot,
+body.theme-transitioning .hint-text {
+  transition: all 1s ease;
+}
+
+/* ===== 主题切换按钮 ===== */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+
+.theme-toggle svg {
+  width: 100%;
+  height: 100%;
+}
+
+.theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+
+/* 日间主题下切换按钮深色 */
+.theme-day .theme-toggle {
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.5);
+  color: rgba(60, 80, 120, 0.8);
+}
+
+.theme-day .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.25);
+  color: rgba(40, 60, 100, 1);
+}
+
+/* ===== 鼠标跟随光晕 ===== */
+.cursor-glow {
+  position: fixed;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 195, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.cursor-glow.visible {
+  opacity: 1;
+}
+
+.theme-day .cursor-glow {
+  background: radial-gradient(circle, rgba(74, 144, 217, 0.06) 0%, transparent 70%);
+}
+
+/* ===== 主容器 ===== */
+.main-container {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+/* ===== 手指点击动画区域 ===== */
+.tap-area {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 可点击热区（覆盖脉冲辐射范围） */
+.tap-hitzone {
+  position: absolute;
+  width: 350px;
+  height: 350px;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  z-index: 5;
+}
+
+/* 脉冲光环 */
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 195, 255, 0.4);
+  animation: pulseExpand 2s ease-out infinite;
+  transition: border-color 0.3s ease;
+}
+
+/* 悬停增强：脉冲加速 + 发光增强 */
+.tap-area.hover-active .pulse-ring {
+  border-color: rgba(0, 195, 255, 0.7);
+  animation-duration: 1.2s;
+}
+
+.tap-area.hover-active .glow-circle {
+  box-shadow:
+    0 0 50px rgba(0, 195, 255, 0.4),
+    0 0 100px rgba(0, 195, 255, 0.2),
+    0 0 150px rgba(0, 195, 255, 0.1);
+}
+
+.theme-day .tap-area.hover-active .pulse-ring {
+  border-color: rgba(74, 144, 217, 0.7);
+}
+
+.theme-day .tap-area.hover-active .glow-circle {
+  box-shadow:
+    0 0 50px rgba(74, 144, 217, 0.3),
+    0 0 100px rgba(74, 144, 217, 0.15);
+}
+
+.pulse-ring:nth-child(2) {
+  animation-delay: 0.6s;
+}
+
+.pulse-ring:nth-child(3) {
+  animation-delay: 1.2s;
+}
+
+@keyframes pulseExpand {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* 中心发光圆 */
+.glow-circle {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 195, 255, 0.15) 0%, transparent 70%);
+  box-shadow:
+    0 0 30px rgba(0, 195, 255, 0.2),
+    0 0 60px rgba(0, 195, 255, 0.1),
+    inset 0 0 30px rgba(0, 195, 255, 0.05);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 30px rgba(0, 195, 255, 0.2),
+      0 0 60px rgba(0, 195, 255, 0.1);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow:
+      0 0 40px rgba(0, 195, 255, 0.35),
+      0 0 80px rgba(0, 195, 255, 0.2),
+      0 0 120px rgba(0, 195, 255, 0.1);
+  }
+}
+
+/* 小手图标 wrapper（承载 tap 动画） */
+.hand-icon-wrapper {
+  position: relative;
+  z-index: 2;
+  width: 64px;
+  height: 64px;
+  animation: handTap 1.6s ease-in-out infinite;
+}
+
+@keyframes handTap {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  15% {
+    transform: translateY(6px) scale(0.92);
+  }
+  30% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 小手图标（磁吸倾斜由 JS 控制 transform） */
+.hand-icon {
+  width: 100%;
+  height: 100%;
+  /* 将灰色SVG着色为青蓝色 + 外发光 */
+  filter: brightness(0) saturate(100%) invert(70%) sepia(50%) saturate(1000%) hue-rotate(160deg) brightness(1.1) drop-shadow(0 0 12px rgba(0, 195, 255, 0.6));
+  transition: transform 0.15s ease-out;
+}
+
+/* 点击涟漪（手指按下时的小圆点） */
+.tap-dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 195, 255, 0.9);
+  top: 38%;
+  left: 44%;
+  animation: tapDotPulse 1.6s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(0, 195, 255, 0.8);
+}
+
+@keyframes tapDotPulse {
+  0%, 10% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 0;
+    transform: scale(2.5);
+  }
+  31%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+/* ===== 提示文字（逐字显现 + 呼吸） ===== */
+.hint-text {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  letter-spacing: 6px;
+  display: flex;
+  gap: 2px;
+}
+
+.hint-char {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.hint-char.show {
+  opacity: 1;
+  transform: translateY(0);
+  animation: breathe 2.5s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ===== 流星 ===== */
+.shooting-star {
+  position: fixed;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  box-shadow:
+    0 0 4px 1px rgba(255, 255, 255, 0.6),
+    0 0 12px 2px rgba(0, 195, 255, 0.3);
+}
+
+.shooting-star::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+  transform-origin: right center;
+  transform: rotate(0deg);
+}
+
+/* 粒子爆炸 */
+.explosion-particle {
+  position: fixed;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+/* 淡出整体内容 */
+.main-container.fade-out {
+  animation: fadeOut 0.6s ease forwards;
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* ===== 页面过渡遮罩 ===== */
+.page-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #0a0a0a;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+
+.page-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 日间主题遮罩用白色 */
+.theme-day .page-overlay {
+  background: #E8F4F8;
+}
+
+/* ===== 日间主题适配 ===== */
+.theme-day {
+  background: #E8F4F8;
+}
+
+.theme-day .pulse-ring {
+  border-color: rgba(74, 144, 217, 0.4);
+}
+
+.theme-day .glow-circle {
+  background: radial-gradient(circle, rgba(74, 144, 217, 0.15) 0%, transparent 70%);
+  box-shadow:
+    0 0 30px rgba(74, 144, 217, 0.15),
+    0 0 60px rgba(74, 144, 217, 0.08);
+}
+
+.theme-day .hand-icon {
+  filter: brightness(0) saturate(100%) invert(35%) sepia(60%) saturate(600%) hue-rotate(190deg) brightness(0.95) drop-shadow(0 0 8px rgba(74, 144, 217, 0.4));
+}
+
+.theme-day .shooting-star {
+  display: none; /* 白天不显示流星 */
+}
+
+.theme-day .tap-dot {
+  background: rgba(74, 144, 217, 0.8);
+  box-shadow: 0 0 10px rgba(74, 144, 217, 0.6);
+}
+
+.theme-day .hint-text {
+  color: rgba(60, 80, 120, 0.6);
+}
+
+.theme-day .explosion-particle {
+  /* JS 控制颜色，此处不需额外处理 */
+}
+
+/* ===== 竖屏提示（仅移动端竖屏显示） ===== */
+.portrait-overlay {
+  display: none;
+}
+
+@media screen and (orientation: portrait) and (max-width: 768px) {
+  .portrait-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 999999;
+    background: rgba(5, 5, 10, 0.96);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .portrait-icon {
+    width: 70px;
+    height: 70px;
+    animation: rotatePhone 2.4s ease-in-out infinite;
+  }
+
+  .portrait-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  @keyframes rotatePhone {
+    0%, 15% {
+      transform: rotate(0deg);
+    }
+    35%, 65% {
+      transform: rotate(90deg);
+    }
+    85%, 100% {
+      transform: rotate(0deg);
+    }
+  }
+
+  .portrait-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    letter-spacing: 4px;
+    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Travel Album</title>
+  <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+
+  <!-- 背景 -->
+  <canvas id="starfield"></canvas>
+  <canvas id="skyfield"></canvas>
+
+  <!-- 鼠标跟随光晕 -->
+  <div class="cursor-glow" id="cursorGlow"></div>
+
+  <!-- 主题切换按钮 -->
+  <button class="theme-toggle" id="themeToggle" title="切换主题"></button>
+
+  <!-- 主内容 -->
+  <div class="main-container" id="mainContainer">
+    <div class="tap-area" id="tapArea">
+      <div class="tap-hitzone" id="tapHitzone"></div>
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring"></div>
+      <div class="pulse-ring"></div>
+      <div class="glow-circle"></div>
+      <div class="tap-dot"></div>
+      <!-- 小手图标 -->
+      <div class="hand-icon-wrapper">
+        <img class="hand-icon" id="handIcon" src="icon/hand.svg" alt="点击">
+      </div>
+    </div>
+
+    <div class="hint-text" id="hintText">
+      <span class="hint-char">—</span>
+      <span class="hint-char">我</span>
+      <span class="hint-char">的</span>
+      <span class="hint-char">旅</span>
+      <span class="hint-char">行</span>
+      <span class="hint-char">日</span>
+      <span class="hint-char">记</span>
+      <span class="hint-char">—</span>
+    </div>
+  </div>
+
+  <!-- 页面过渡遮罩 -->
+  <div class="page-overlay" id="pageOverlay"></div>
+
+  <!-- 竖屏提示 -->
+  <div class="portrait-overlay">
+    <div class="portrait-icon">
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="10" width="50" height="80" rx="8" stroke="rgba(0,195,255,0.8)" stroke-width="3"/>
+        <circle cx="50" cy="78" r="4" fill="rgba(0,195,255,0.6)"/>
+      </svg>
+    </div>
+    <p class="portrait-text">请横屏观看</p>
+  </div>
+
+  <script src="js/starfield.js"></script>
+  <script src="js/sky.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/index.js"></script>
+</body>
+</html>

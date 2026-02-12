@@ -1,0 +1,24 @@
+[
+  {
+    "src": "image/location/01.jpg",
+    "title": "青岛",
+    "details": [
+      { "src": "image/location/detail/WechatIMG1.jpg", "title": "海边露营", "desc": "与朋友在海边露营，晒着太阳，吹着微风，看着海景，享受着自由自在的生活" },
+      { "src": "image/location/detail/WechatIMG2.jpg", "title": "蔚蓝大海" },
+      { "src": "image/location/detail/WechatIMG3.jpg" },
+      { "src": "image/location/detail/WechatIMG4.jpg" },
+      { "src": "image/location/detail/WechatIMG5.jpg" },
+      { "src": "image/location/detail/WechatIMG6.jpg" },
+      { "src": "image/location/detail/WechatIMG7.jpg" },
+      { "src": "image/location/detail/WechatIMG8.jpg" },
+      { "src": "image/location/detail/WechatIMG9.jpg" },
+      { "src": "image/location/detail/WechatIMG10.jpg" },
+      { "src": "image/location/detail/WechatIMG11.jpg" }
+    ]
+  },
+  { "src": "image/location/02.jpg", "title": "北京", "details": [] },
+  { "src": "image/location/03.jpg", "title": "上海", "details": [] },
+  { "src": "image/location/04.jpg", "title": "西安", "details": [] },
+  { "src": "image/location/05.jpg", "title": "重庆", "details": [] },
+  { "src": "image/location/06.jpg", "title": "兰州", "details": [] }
+]
