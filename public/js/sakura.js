@@ -244,7 +244,8 @@ function createPointFlowers() {
     useShader(pointFlower.program);
     pointFlower.offset = new Float32Array([0.0, 0.0, 0.0]);
     pointFlower.fader = Vector3.create(0.0, 10.0, 0.0);
-    pointFlower.numFlowers = 1600;
+    // 移动端减少粒子数（1600 → 600）
+    pointFlower.numFlowers = sakuraIsMobile ? 600 : 1600;
     pointFlower.particles = new Array(pointFlower.numFlowers);
     pointFlower.dataArray = new Float32Array(pointFlower.numFlowers * (3 + 3 + 2));
     pointFlower.positionArrayOffset = 0;
@@ -357,28 +358,31 @@ function renderPointFlowers() {
     gl.vertexAttribPointer(prog.attributes.aPosition, 3, gl.FLOAT, false, 0, pointFlower.positionArrayOffset * Float32Array.BYTES_PER_ELEMENT);
     gl.vertexAttribPointer(prog.attributes.aEuler, 3, gl.FLOAT, false, 0, pointFlower.eulerArrayOffset * Float32Array.BYTES_PER_ELEMENT);
     gl.vertexAttribPointer(prog.attributes.aMisc, 2, gl.FLOAT, false, 0, pointFlower.miscArrayOffset * Float32Array.BYTES_PER_ELEMENT);
-    for(var i = 1; i < 2; i++) {
-        var zpos = i * -2.0;
-        pointFlower.offset[0] = pointFlower.area.x * -1.0;
-        pointFlower.offset[1] = pointFlower.area.y * -1.0;
-        pointFlower.offset[2] = pointFlower.area.z * zpos;
-        gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
-        gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
-        pointFlower.offset[0] = pointFlower.area.x * -1.0;
-        pointFlower.offset[1] = pointFlower.area.y *  1.0;
-        pointFlower.offset[2] = pointFlower.area.z * zpos;
-        gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
-        gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
-        pointFlower.offset[0] = pointFlower.area.x *  1.0;
-        pointFlower.offset[1] = pointFlower.area.y * -1.0;
-        pointFlower.offset[2] = pointFlower.area.z * zpos;
-        gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
-        gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
-        pointFlower.offset[0] = pointFlower.area.x *  1.0;
-        pointFlower.offset[1] = pointFlower.area.y *  1.0;
-        pointFlower.offset[2] = pointFlower.area.z * zpos;
-        gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
-        gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
+    // 移动端跳过偏移批次绘制（5批→1批），大幅减少 draw call
+    if (!sakuraIsMobile) {
+        for(var i = 1; i < 2; i++) {
+            var zpos = i * -2.0;
+            pointFlower.offset[0] = pointFlower.area.x * -1.0;
+            pointFlower.offset[1] = pointFlower.area.y * -1.0;
+            pointFlower.offset[2] = pointFlower.area.z * zpos;
+            gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
+            gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
+            pointFlower.offset[0] = pointFlower.area.x * -1.0;
+            pointFlower.offset[1] = pointFlower.area.y *  1.0;
+            pointFlower.offset[2] = pointFlower.area.z * zpos;
+            gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
+            gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
+            pointFlower.offset[0] = pointFlower.area.x *  1.0;
+            pointFlower.offset[1] = pointFlower.area.y * -1.0;
+            pointFlower.offset[2] = pointFlower.area.z * zpos;
+            gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
+            gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
+            pointFlower.offset[0] = pointFlower.area.x *  1.0;
+            pointFlower.offset[1] = pointFlower.area.y *  1.0;
+            pointFlower.offset[2] = pointFlower.area.z * zpos;
+            gl.uniform3fv(prog.uniforms.uOffset, pointFlower.offset);
+            gl.drawArrays(gl.POINT, 0, pointFlower.numFlowers);
+        }
     }
     pointFlower.offset[0] = 0.0;
     pointFlower.offset[1] = 0.0;
@@ -558,6 +562,9 @@ function render() {
 }
 
 var sakuraAnimating = true;
+var sakuraIsMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+var sakuraScale = sakuraIsMobile ? 0.5 : 1.0; // 移动端半分辨率渲染
+
 function animate() {
     var curdate = new Date();
     timeInfo.elapsed = (curdate - timeInfo.start) / 1000.0;
@@ -568,9 +575,9 @@ function animate() {
 }
 
 function makeSakuraCanvasFullScreen(canvas) {
-    // 使用视口尺寸（fixed 定位不受滚动影响）
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // 移动端使用半分辨率渲染，大幅降低 GPU 填充率
+    canvas.width = Math.floor(window.innerWidth * sakuraScale);
+    canvas.height = Math.floor(window.innerHeight * sakuraScale);
 }
 
 // ===== 初始化入口 =====

@@ -449,6 +449,39 @@ body.theme-transitioning .hint-text {
   /* JS 控制颜色，此处不需额外处理 */
 }
 
+/* ===== 移动端性能优化 ===== */
+@media (max-width: 1024px) {
+  .theme-toggle {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* 减少光晕层级 */
+  .glow-circle {
+    box-shadow:
+      0 0 30px rgba(0, 195, 255, 0.2),
+      0 0 60px rgba(0, 195, 255, 0.1);
+    animation: none;
+  }
+
+  .theme-day .glow-circle {
+    box-shadow:
+      0 0 30px rgba(74, 144, 217, 0.15),
+      0 0 60px rgba(74, 144, 217, 0.08);
+  }
+
+  /* 简化脉冲光环 */
+  .tap-area.hover-active .glow-circle {
+    box-shadow:
+      0 0 50px rgba(0, 195, 255, 0.3),
+      0 0 100px rgba(0, 195, 255, 0.15);
+  }
+
+  .cursor-glow {
+    display: none;
+  }
+}
+
 /* ===== 竖屏提示（仅移动端竖屏显示） ===== */
 .portrait-overlay {
   display: none;

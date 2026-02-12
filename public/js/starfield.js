@@ -1,14 +1,39 @@
-// ===== 公共星空粒子背景 =====
+// ===== 公共星空粒子背景（性能优化版） =====
 (function () {
   const canvas = document.getElementById('starfield');
   if (!canvas) return;
 
   const ctx = canvas.getContext('2d');
   let stars = [];
+  let animId = null;
+  let running = false;
+
+  // 移动端检测，减少粒子数量
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const STAR_COUNT = isMobile ? 80 : 180;
+
+  // 缓存背景径向渐变
+  let bgCache = null;
 
   function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    bgCache = null; // 尺寸变化后重建缓存
+  }
+
+  function cacheBg() {
+    bgCache = document.createElement('canvas');
+    bgCache.width = canvas.width;
+    bgCache.height = canvas.height;
+    const bctx = bgCache.getContext('2d');
+    const grd = bctx.createRadialGradient(
+      canvas.width / 2, canvas.height / 2, 0,
+      canvas.width / 2, canvas.height / 2, canvas.width * 0.6
+    );
+    grd.addColorStop(0, 'rgba(0, 30, 60, 0.15)');
+    grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    bctx.fillStyle = grd;
+    bctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
   function createStars(count) {
@@ -32,15 +57,9 @@
   function drawStars(time) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 微弱的径向渐变背景光
-    const grd = ctx.createRadialGradient(
-      canvas.width / 2, canvas.height / 2, 0,
-      canvas.width / 2, canvas.height / 2, canvas.width * 0.6
-    );
-    grd.addColorStop(0, 'rgba(0, 30, 60, 0.15)');
-    grd.addColorStop(1, 'rgba(0, 0, 0, 0)');
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // 使用缓存的背景渐变
+    if (!bgCache) cacheBg();
+    ctx.drawImage(bgCache, 0, 0);
 
     stars.forEach(star => {
       const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.4 + 0.6;
@@ -51,8 +70,8 @@
       ctx.fillStyle = star.color + alpha + ')';
       ctx.fill();
 
-      // 较亮的星星加个小光晕
-      if (star.size > 1.5) {
+      // 较亮的星星加个小光晕（移动端跳过以省性能）
+      if (!isMobile && star.size > 1.5) {
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.size * 3, 0, Math.PI * 2);
         ctx.fillStyle = star.color + (alpha * 0.1) + ')';
@@ -70,17 +89,34 @@
     });
   }
 
-  function animateStars(time) {
+  function animate(time) {
+    if (!running) return;
     drawStars(time);
-    requestAnimationFrame(animateStars);
+    animId = requestAnimationFrame(animate);
+  }
+
+  function start() {
+    if (running) return;
+    running = true;
+    animId = requestAnimationFrame(animate);
+  }
+
+  function stop() {
+    running = false;
+    if (animId) {
+      cancelAnimationFrame(animId);
+      animId = null;
+    }
   }
 
   resizeCanvas();
-  createStars(180);
-  animateStars(0);
+  createStars(STAR_COUNT);
+
+  // 暴露控制接口，供 theme.js 调用
+  window.starfieldAnim = { start, stop };
 
   window.addEventListener('resize', () => {
     resizeCanvas();
-    createStars(180);
+    createStars(STAR_COUNT);
   });
 })();

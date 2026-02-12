@@ -1,4 +1,4 @@
-// ===== 主题管理（日/夜自动切换 + 手动切换） =====
+// ===== 主题管理（日/夜自动切换 + 手动切换 + Canvas 动画控制） =====
 (function () {
   const KEY = 'travelAlbum_theme';
 
@@ -33,6 +33,15 @@
     // 切换 Canvas 可见性（通过 opacity 过渡）
     if (starCanvas) starCanvas.style.opacity = (theme === 'night') ? '' : '0';
     if (skyCanvas) skyCanvas.style.opacity = (theme === 'day') ? '' : '0';
+
+    // 核心优化：只运行当前可见画布的动画循环，隐藏的立即停止
+    if (theme === 'night') {
+      if (window.starfieldAnim) window.starfieldAnim.start();
+      if (window.skyfieldAnim) window.skyfieldAnim.stop();
+    } else {
+      if (window.skyfieldAnim) window.skyfieldAnim.start();
+      if (window.starfieldAnim) window.starfieldAnim.stop();
+    }
 
     // 更新按钮图标
     if (btn) {

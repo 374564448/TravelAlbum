@@ -44,6 +44,8 @@ document.addEventListener('mousemove', (e) => {
 
 // ===== 4. 偶发流星效果（仅夜间主题） =====
 (function () {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   function createShootingStar() {
     // 仅夜间主题下显示
     if (document.body.classList.contains('theme-day')) return;
@@ -65,8 +67,6 @@ document.addEventListener('mousemove', (e) => {
     const dx = -Math.cos(rad) * distance;
     const dy = Math.sin(rad) * distance;
 
-    // 尾巴方向与运动方向一致
-    const tail = star.querySelector('::after') || star;
     star.style.transform = `rotate(${180 + angle}deg)`;
 
     document.body.appendChild(star);
@@ -83,17 +83,19 @@ document.addEventListener('mousemove', (e) => {
     setTimeout(() => star.remove(), 1200);
   }
 
-  // 每 3~8 秒随机发射一颗流星
+  // 移动端降低流星频率（8~15秒），PC 端（3~8秒）
   function scheduleNext() {
-    const delay = 3000 + Math.random() * 5000;
+    const delay = isMobile
+      ? 8000 + Math.random() * 7000
+      : 3000 + Math.random() * 5000;
     setTimeout(() => {
       createShootingStar();
       scheduleNext();
     }, delay);
   }
 
-  // 页面加载 3 秒后开始
-  setTimeout(scheduleNext, 3000);
+  // 页面加载后延迟开始
+  setTimeout(scheduleNext, isMobile ? 5000 : 3000);
 })();
 
 // ===== 5. 手指图标磁吸倾斜 =====
@@ -152,6 +154,7 @@ document.getElementById('tapHitzone').addEventListener('click', (e) => {
 
 // ===== 粒子爆炸 =====
 function createExplosion(x, y) {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const colors = [
     'rgba(0, 195, 255, 0.9)',
     'rgba(100, 220, 255, 0.8)',
@@ -160,11 +163,13 @@ function createExplosion(x, y) {
     'rgba(255, 255, 255, 0.6)'
   ];
 
-  for (let i = 0; i < 30; i++) {
+  // 移动端减少粒子数（30 → 15）
+  const count = isMobile ? 15 : 30;
+  for (let i = 0; i < count; i++) {
     const particle = document.createElement('div');
     particle.className = 'explosion-particle';
 
-    const angle = (Math.PI * 2 / 30) * i + Math.random() * 0.5;
+    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.5;
     const velocity = 80 + Math.random() * 180;
     const size = 2 + Math.random() * 4;
 

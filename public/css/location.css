@@ -530,6 +530,29 @@ body.theme-transitioning .drag-hint {
     0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+/* ===== 移动端性能优化 ===== */
+@media (max-width: 1024px) {
+  .theme-toggle {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .toast {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .panel-badge {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* 简化圆柱底部光效 */
+  .cylinder-scene::after {
+    filter: none;
+  }
+}
+
 /* ===== 竖屏提示（仅移动端竖屏显示） ===== */
 .portrait-overlay {
   display: none;
