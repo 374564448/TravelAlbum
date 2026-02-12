@@ -255,6 +255,10 @@ function openLightbox(index, details) {
   updateLightboxInfo(detail);
   updateCounter();
   if (window._autoScroll) window._autoScroll.pause();
+
+  // 锁定背景滚动
+  document.body.style.overflow = 'hidden';
+
   const frame = document.getElementById('lightboxFrame');
   frame.style.transition = '';
   frame.style.opacity = '';
@@ -296,6 +300,10 @@ function closeLightbox() {
   lightbox.classList.remove('active');
   lightbox.classList.add('closing');
   currentIndex = -1;
+
+  // 恢复背景滚动
+  document.body.style.overflow = '';
+
   if (window._autoScroll) window._autoScroll.resume();
   if (closeTimer) clearTimeout(closeTimer);
   closeTimer = setTimeout(() => {
