@@ -191,9 +191,9 @@ function renderLocations(locations) {
         <div class="card-meta">${loc.photo_count || 0} 张照片</div>
       </div>
       <div class="card-actions">
-        <button class="btn btn-sm btn-primary" onclick="openPhotos(${loc.id}, '${escapeHtml(loc.title)}')">管理照片</button>
-        <button class="btn btn-sm btn-ghost" onclick="openEditLocation(${loc.id})">编辑</button>
-        <button class="btn btn-sm btn-danger" onclick="confirmDeleteLocation(${loc.id}, '${escapeHtml(loc.title)}')">删除</button>
+        <button class="btn btn-sm btn-outline-primary" onclick="openPhotos(${loc.id}, '${escapeHtml(loc.title)}')">管理照片</button>
+        <button class="btn btn-sm btn-outline" onclick="openEditLocation(${loc.id})">编辑</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDeleteLocation(${loc.id}, '${escapeHtml(loc.title)}')">删除</button>
       </div>
     </div>
   `).join('');
@@ -440,8 +440,8 @@ function renderPhotos(photos) {
       <img src="${p.url}" alt="${escapeHtml(p.title || '')}" loading="lazy">
       <div class="photo-info">${escapeHtml(p.title || '无标题')}</div>
       <div class="photo-actions">
-        <button class="btn btn-sm btn-ghost" onclick="openEditPhoto(${p.id}, '${escapeJs(p.title || '')}', '${escapeJs(p.desc || '')}')">编辑</button>
-        <button class="btn btn-sm btn-danger" onclick="confirmDeletePhoto(${p.id})">删除</button>
+        <button class="btn btn-sm btn-outline" onclick="openEditPhoto(${p.id}, '${escapeJs(p.title || '')}', '${escapeJs(p.desc || '')}')">编辑</button>
+        <button class="btn btn-sm btn-outline-danger" onclick="confirmDeletePhoto(${p.id})">删除</button>
       </div>
     </div>
   `).join('');

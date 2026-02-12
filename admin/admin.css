@@ -131,6 +131,37 @@ body {
 }
 .btn-ghost:hover { color: var(--text); background: rgba(0,0,0,0.05); }
 
+/* 统一的轮廓线按钮（用于卡片操作） */
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-outline:hover {
+  background: rgba(0,0,0,0.04);
+  border-color: #ccc;
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+.btn-outline-primary:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+.btn-outline-danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
 .btn-block { width: 100%; padding: 12px; }
 
 .btn-sm { padding: 5px 12px; font-size: 13px; }
@@ -245,7 +276,15 @@ body {
 .location-card .card-actions {
   display: flex;
   gap: 6px;
-  padding: 0 16px 14px;
+  padding: 8px 12px 12px;
+}
+
+.location-card .card-actions .btn {
+  flex: 1 1 0;
+  text-align: center;
+  min-width: 0;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 /* ===== 照片网格 ===== */
@@ -292,8 +331,8 @@ body {
 
 .photo-card .photo-actions {
   display: flex;
-  gap: 4px;
-  padding: 0 12px 8px;
+  gap: 8px;
+  padding: 8px 12px 12px;
 }
 
 /* ===== 上传区域 ===== */
@@ -546,11 +585,10 @@ body {
     font-size: 11px;
   }
   .location-card .card-actions {
-    padding: 0 10px 8px;
-    flex-wrap: wrap;
+    padding: 6px 8px 8px;
+    gap: 4px;
   }
   .location-card .card-actions .btn-sm {
-    padding: 3px 8px;
     font-size: 11px;
   }
   .photo-grid {
