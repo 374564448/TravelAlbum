@@ -211,6 +211,59 @@ OSS_DIR=travel-album              # OSS 内存储目录前缀
 
 ## 四、域名与 Nginx 配置
 
+### 4.0 域名未就绪时：通过公网 IP 访问
+
+如果域名尚未申请或备案未完成，可以直接通过**公网 IP + 端口**访问，无需配置 Nginx。
+
+**安全组开放端口：**
+
+| 端口 | 用途 |
+|------|------|
+| 22 | SSH 登录 |
+| 80 | 用户端 |
+| 9999 | 管理后台 |
+
+**Nginx 配置（可选）：**
+
+如果希望用户端走 80 端口（省略端口号更简洁），可配置 Nginx：
+
+```bash
+sudo vi /etc/nginx/conf.d/travel-album.conf
+```
+
+```nginx
+# 用户端：http://公网IP
+server {
+    listen 80;
+    server_name _;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+**访问地址：**
+
+| 服务 | 地址 |
+|------|------|
+| 用户端 | `http://你的公网IP` |
+| 管理后台 | `http://你的公网IP:9999` |
+
+> **注意**：IP 直访无法使用 HTTPS（Let's Encrypt 不支持为 IP 签发证书）。域名备案完成后，请切换到下方的双域名 + HTTPS 方案。
+
+---
+
+### 以下为域名就绪后的正式配置方案
+
 本项目采用**双域名**方案：用户端和管理后台各使用一个子域名，均走 443 (HTTPS) 端口，外部无需暴露 9999 端口，更加安全。
 
 - 用户端域名示例：`travel.your-domain.com`
