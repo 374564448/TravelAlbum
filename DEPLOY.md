@@ -536,12 +536,39 @@ pm2 logs travel-album --lines 100  # 最近 100 行
 
 ### Q: 如何更新项目代码？
 
+**一键更新命令（可直接复制执行）：**
+
 ```bash
-cd /opt/travel-album
-git pull                        # 拉取最新代码
-npm install --production        # 更新依赖（如有变动）
-pm2 restart travel-album        # 重启服务
+cd /opt/travel-album && \
+cp data/travel.db data/travel.db.bak.$(date +%Y%m%d%H%M) && \
+git pull origin master && \
+npm install --production && \
+pm2 restart travel-album && \
+pm2 logs travel-album --lines 10
 ```
+
+**步骤说明：**
+
+1. 备份数据库（以防万一）
+2. 拉取最新代码
+3. 安装/更新依赖（无新依赖时会快速跳过）
+4. 重启服务
+5. 查看日志确认启动正常
+
+**数据安全：** `git pull` 只更新被 Git 跟踪的代码文件，以下数据**不会被覆盖**：
+
+| 数据 | 存储位置 | 原因 |
+|------|---------|------|
+| 数据库（地点、照片、管理员） | `data/travel.db` | 已在 `.gitignore` 中排除 |
+| OSS 上的图片 | 阿里云 OSS | 与代码仓库无关 |
+| 环境变量 | `.env` | 已在 `.gitignore` 中排除 |
+
+> 如果在服务器上修改过被 Git 跟踪的文件（如手动改过代码），`git pull` 可能提示冲突，用以下方式解决：
+> ```bash
+> git stash              # 暂存本地修改
+> git pull origin master
+> git stash pop          # 恢复本地修改
+> ```
 
 ### Q: 如何重置管理员密码？
 
