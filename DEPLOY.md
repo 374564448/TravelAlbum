@@ -7,10 +7,9 @@
 - 进入 [阿里云 ECS 控制台](https://ecs.console.aliyun.com/) 创建实例
 - 推荐配置：2 核 2G 以上，系统选 **Ubuntu 22.04 LTS** 或 **CentOS 8**
 - 安全组放通以下端口：
-  - `80`（用户端 HTTP）
-  - `443`（用户端 HTTPS，可选）
-  - `9999`（管理后台）
   - `22`（SSH 登录）
+  - `80`（HTTP，自动跳转 HTTPS）
+  - `443`（HTTPS，用户端 + 管理后台）
 
 ### 1.2 SSH 登录服务器
 
@@ -88,7 +87,7 @@ npm install --production
 ### 2.3 配置环境变量
 
 ```bash
-cp .env .env.backup  # 备份默认配置
+cp .env.example .env
 vi .env
 ```
 
@@ -212,35 +211,49 @@ OSS_DIR=travel-album              # OSS 内存储目录前缀
 
 ## 四、域名与 Nginx 配置
 
+本项目采用**双域名**方案：用户端和管理后台各使用一个子域名，均走 443 (HTTPS) 端口，外部无需暴露 9999 端口，更加安全。
+
+- 用户端域名示例：`travel.your-domain.com`
+- 管理后台域名示例：`traveladmin.your-domain.com`
+
+> 请将下文中所有 `your-domain.com` 替换为你的真实域名。
+
 ### 4.1 域名解析
 
-在域名服务商（如阿里云域名控制台）添加 A 记录：
+在域名服务商（如阿里云域名控制台）添加两条 A 记录：
 
 | 记录类型 | 主机记录 | 记录值 |
 |---------|---------|--------|
-| A | travel（或你想要的子域名） | 你的 ECS 公网 IP |
+| A | travel | 你的 ECS 公网 IP |
+| A | admin | 你的 ECS 公网 IP |
 
-### 4.2 Nginx 配置
+### 4.2 安全组端口
+
+只需开放以下端口，**不需要**开放 9999：
+
+| 端口 | 用途 |
+|------|------|
+| 22 | SSH 登录 |
+| 80 | HTTP（自动跳转 HTTPS） |
+| 443 | HTTPS |
+
+### 4.3 Nginx 配置（第一步：纯 HTTP）
+
+先写一个纯 HTTP 配置，让 certbot 在此基础上自动添加 HTTPS：
 
 ```bash
 sudo vi /etc/nginx/conf.d/travel-album.conf
 ```
 
-写入以下内容（替换 `travel.example.com` 为你的真实域名）：
+写入以下内容：
 
 ```nginx
-# ===== OSS 图片缓存区（放在 http {} 块内，编辑 /etc/nginx/nginx.conf 添加） =====
-# proxy_cache_path /var/cache/nginx/oss_images
-#     levels=1:2
-#     keys_zone=oss_cache:10m
-#     max_size=2g
-#     inactive=60m
-#     use_temp_path=off;
+# /etc/nginx/conf.d/travel-album.conf
 
 # ===== 用户端 =====
 server {
     listen 80;
-    server_name travel.example.com;
+    server_name travel.your-domain.com;
 
     location / {
         proxy_pass http://127.0.0.1:3000;
@@ -249,27 +262,12 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
-
-    # 可选：OSS 图片代理缓存（取消注释启用）
-    # 启用前需先在 nginx.conf 的 http {} 块中添加上方的 proxy_cache_path
-    # location /oss/ {
-    #     proxy_pass https://你的Bucket.oss-cn-hangzhou.aliyuncs.com/;
-    #     proxy_cache oss_cache;
-    #     proxy_cache_valid 200 30m;
-    #     proxy_cache_valid 404 1m;
-    #     proxy_cache_key $uri;
-    #     proxy_cache_use_stale error timeout updating;
-    #     add_header X-Cache-Status $upstream_cache_status;
-    #     add_header Cache-Control "public, max-age=1800";
-    #     proxy_connect_timeout 10s;
-    #     proxy_read_timeout 30s;
-    # }
 }
 
 # ===== 管理后台 =====
 server {
-    listen 9999;
-    server_name travel.example.com;
+    listen 80;
+    server_name traveladmin.your-domain.com;
 
     client_max_body_size 20m;
 
@@ -283,31 +281,147 @@ server {
 }
 ```
 
-### 4.3 验证并重载 Nginx
+验证并重载：
 
 ```bash
-# 检查配置语法
-sudo nginx -t
-
-# 重载配置
-sudo systemctl reload nginx
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 4.4 配置 HTTPS（推荐）
+### 4.4 申请 SSL 证书（第二步：启用 HTTPS）
+
+使用 Let's Encrypt 免费证书，certbot 会自动修改 Nginx 配置（添加 443 监听、证书路径、HTTP→HTTPS 跳转）：
 
 ```bash
 # 安装 certbot
 sudo apt install certbot python3-certbot-nginx -y   # Ubuntu
 # sudo yum install certbot python3-certbot-nginx -y  # CentOS
 
-# 自动申请 SSL 证书并配置
-sudo certbot --nginx -d travel.example.com
+# 一键为两个域名申请证书并自动配置 Nginx
+sudo certbot --nginx -d travel.your-domain.com -d traveladmin.your-domain.com
 
-# 证书自动续期（certbot 会自动添加定时任务）
+# 验证自动续期
 sudo certbot renew --dry-run
 ```
 
-> 注意：管理后台端口 9999 如果也需要 HTTPS，需要单独为该 server 块配置证书，或者改为统一走 443 端口用路径区分。
+执行后 certbot 会自动将 Nginx 配置改为类似以下结构：
+
+```nginx
+# ===== 用户端 =====
+
+# HTTP → HTTPS 跳转（certbot 自动生成）
+server {
+    listen 80;
+    server_name travel.your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+# HTTPS（certbot 自动生成）
+server {
+    listen 443 ssl http2;
+    server_name travel.your-domain.com;
+
+    ssl_certificate     /etc/letsencrypt/live/travel.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/travel.your-domain.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+
+# ===== 管理后台 =====
+
+server {
+    listen 80;
+    server_name traveladmin.your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name traveladmin.your-domain.com;
+
+    ssl_certificate     /etc/letsencrypt/live/traveladmin.your-domain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/traveladmin.your-domain.com/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 20m;
+
+    location / {
+        proxy_pass http://127.0.0.1:9999;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+> 以上 HTTPS 配置仅供参考，实际以 certbot 自动生成为准，一般无需手动修改。
+
+### 4.5 OSS 图片代理缓存（可选）
+
+如需在 Nginx 层缓存 OSS 图片以减少流量消耗，按以下步骤配置：
+
+**第一步**：在 `/etc/nginx/nginx.conf` 的 `http {}` 块内添加缓存区定义：
+
+```nginx
+http {
+    # ... 其他配置 ...
+
+    # OSS 图片缓存区
+    proxy_cache_path /var/cache/nginx/oss_images
+        levels=1:2
+        keys_zone=oss_cache:10m
+        max_size=2g
+        inactive=60m
+        use_temp_path=off;
+}
+```
+
+**第二步**：在用户端的 HTTPS server 块中添加 OSS 代理 location：
+
+```nginx
+server {
+    listen 443 ssl http2;
+    server_name travel.your-domain.com;
+    # ... SSL 配置 ...
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        # ... proxy headers ...
+    }
+
+    # OSS 图片代理缓存
+    location /oss/ {
+        proxy_pass https://你的Bucket.oss-cn-hangzhou.aliyuncs.com/;
+        proxy_cache oss_cache;
+        proxy_cache_valid 200 30m;
+        proxy_cache_valid 404 1m;
+        proxy_cache_key $uri;
+        proxy_cache_use_stale error timeout updating;
+        add_header X-Cache-Status $upstream_cache_status;
+        add_header Cache-Control "public, max-age=1800";
+        proxy_connect_timeout 10s;
+        proxy_read_timeout 30s;
+    }
+}
+```
+
+**第三步**：创建缓存目录并重载：
+
+```bash
+sudo mkdir -p /var/cache/nginx/oss_images
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+启用后，前端图片 URL 从 `https://bucket.oss-cn-xxx.aliyuncs.com/path/photo.jpg` 改为 `https://travel.your-domain.com/oss/path/photo.jpg` 即可走 Nginx 缓存。
 
 ---
 
@@ -396,9 +510,11 @@ node -e "
 
 ## 七、项目端口一览
 
-| 服务 | 内部端口 | 外部端口（Nginx） | 说明 |
-|------|---------|-------------------|------|
-| 用户端 | 3000 | 80 / 443 | 前端展示页面 |
-| 管理后台 | 9999 | 9999 | 后台管理系统 |
-| SQLite | - | - | 本地文件数据库 |
-| 阿里云 OSS | - | - | 图片存储 |
+| 服务 | 内部端口 | 外部端口（Nginx） | 域名 | 说明 |
+|------|---------|-------------------|------|------|
+| 用户端 | 3000 | 80 → 443 (HTTPS) | travel.your-domain.com | 前端展示页面 |
+| 管理后台 | 9999 | 80 → 443 (HTTPS) | traveladmin.your-domain.com | 后台管理系统 |
+| SQLite | - | - | - | 本地文件数据库 |
+| 阿里云 OSS | - | - | - | 图片存储 |
+
+> 将 `your-domain.com` 替换为你的真实域名。
