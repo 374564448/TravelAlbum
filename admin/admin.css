@@ -893,9 +893,7 @@ body {
     font-size: 12px;
     margin-bottom: 12px;
   }
-  .cover-upload-area {
-    max-height: 280px;
-  }
+  /* 不设 max-height，否则会破坏 23:34 比例（高度被压成横图） */
   .toast {
     left: 16px;
     right: 16px;
