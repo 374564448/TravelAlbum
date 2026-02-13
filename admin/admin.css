@@ -485,8 +485,12 @@ body {
 }
 
 /* ===== 封面上传 ===== */
+/* 封面保持 23:34，宽度按视口动态限制，使「标题+输入+封面+按钮」不超出屏幕 */
 .cover-upload-area {
   width: 100%;
+  max-width: min(100%, calc((100vh - 280px) * 23 / 34));
+  margin-left: auto;
+  margin-right: auto;
   aspect-ratio: 23 / 34;
   border: 2px dashed var(--border);
   border-radius: var(--radius);
@@ -497,6 +501,11 @@ body {
   overflow: hidden;
   position: relative;
   transition: border-color 0.2s;
+}
+@supports (height: 100dvh) {
+  .cover-upload-area {
+    max-width: min(100%, calc((100dvh - 280px) * 23 / 34));
+  }
 }
 
 .cover-upload-area:hover {
