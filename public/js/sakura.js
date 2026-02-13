@@ -478,20 +478,19 @@ function renderPostProcess() {
     useEffect(effectLib.mkBrightBuf, renderSpec.mainRT);
     drawEffect(effectLib.mkBrightBuf);
     unuseEffect(effectLib.mkBrightBuf);
-    for(var i = 0; i < 2; i++) {
-        var p = 1.5 + 1 * i;
-        var s = 2.0 + 1 * i;
-        bindRT(renderSpec.wHalfRT1, true);
-        useEffect(effectLib.dirBlur, renderSpec.wHalfRT0);
-        gl.uniform4f(effectLib.dirBlur.program.uniforms.uBlurDir, p, 0.0, s, 0.0);
-        drawEffect(effectLib.dirBlur);
-        unuseEffect(effectLib.dirBlur);
-        bindRT(renderSpec.wHalfRT0, true);
-        useEffect(effectLib.dirBlur, renderSpec.wHalfRT1);
-        gl.uniform4f(effectLib.dirBlur.program.uniforms.uBlurDir, 0.0, p, 0.0, s);
-        drawEffect(effectLib.dirBlur);
-        unuseEffect(effectLib.dirBlur);
-    }
+    // 单次模糊迭代（从2次减至1次，降低 GPU 负担）
+    var p = 1.5;
+    var s = 2.0;
+    bindRT(renderSpec.wHalfRT1, true);
+    useEffect(effectLib.dirBlur, renderSpec.wHalfRT0);
+    gl.uniform4f(effectLib.dirBlur.program.uniforms.uBlurDir, p, 0.0, s, 0.0);
+    drawEffect(effectLib.dirBlur);
+    unuseEffect(effectLib.dirBlur);
+    bindRT(renderSpec.wHalfRT0, true);
+    useEffect(effectLib.dirBlur, renderSpec.wHalfRT1);
+    gl.uniform4f(effectLib.dirBlur.program.uniforms.uBlurDir, 0.0, p, 0.0, s);
+    drawEffect(effectLib.dirBlur);
+    unuseEffect(effectLib.dirBlur);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, renderSpec.width, renderSpec.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -564,13 +563,19 @@ function render() {
 var sakuraAnimating = true;
 var sakuraIsMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var sakuraScale = sakuraIsMobile ? 0.5 : 1.0; // 移动端半分辨率渲染
+var sakuraFrameSkip = 0; // 跳帧计数器
+var sakuraTargetInterval = 1000 / 30; // 目标 30fps
+var sakuraLastRenderTime = 0;
 
-function animate() {
+function animate(timestamp) {
+    if(sakuraAnimating) requestAnimationFrame(animate);
+    // 限制到 ~30fps：仅在间隔足够时才渲染
+    if (timestamp - sakuraLastRenderTime < sakuraTargetInterval) return;
+    sakuraLastRenderTime = timestamp;
     var curdate = new Date();
     timeInfo.elapsed = (curdate - timeInfo.start) / 1000.0;
     timeInfo.delta = (curdate - timeInfo.prev) / 1000.0;
     timeInfo.prev = curdate;
-    if(sakuraAnimating) requestAnimationFrame(animate);
     render();
 }
 
@@ -597,7 +602,7 @@ window.addEventListener('load', function(e) {
     initScene();
     timeInfo.start = new Date();
     timeInfo.prev = timeInfo.start;
-    animate();
+    requestAnimationFrame(animate);
 });
 
 // requestAnimationFrame polyfill

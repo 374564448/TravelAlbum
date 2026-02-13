@@ -10,6 +10,8 @@ function randomRotate() {
 }
 
 // ===== 从 API 加载数据并渲染 =====
+var _detailItems = []; // 供 lightbox 使用
+
 async function initDetail() {
   const id = parseInt(getQueryParam('id'), 10);
   if (isNaN(id)) return;
@@ -26,6 +28,10 @@ async function initDetail() {
 
   if (!item || !item.details || item.details.length === 0) return;
 
+  // 提前建立到 OSS 的连接
+  const firstSrc = typeof item.details[0] === 'string' ? item.details[0] : item.details[0].src;
+  if (typeof ossPreconnect === 'function') ossPreconnect(firstSrc);
+
   // 设置标题
   const titleEl = document.getElementById('detailTitle');
   if (titleEl) titleEl.textContent = item.title || '';
@@ -38,15 +44,16 @@ async function initDetail() {
   if (!grid) return;
 
   // 统一为对象格式（兼容字符串）
-  const detailItems = item.details.map(d => typeof d === 'string' ? { src: d } : d);
+  _detailItems = item.details.map(d => typeof d === 'string' ? { src: d } : d);
 
-  item.details.forEach((detail, i) => {
-    const src = typeof detail === 'string' ? detail : detail.src;
-    const photoTitle = typeof detail === 'object' ? detail.title : '';
-    const photoDesc = typeof detail === 'object' ? detail.desc : '';
+  // 先创建所有卡片 DOM（不设置 img.src，避免同时加载）
+  const cards = [];
+  _detailItems.forEach((detail, i) => {
+    const photoTitle = detail.title || '';
 
     const card = document.createElement('div');
     card.className = 'photo-card';
+    card.classList.add(i % 2 === 0 ? 'enter-left' : 'enter-right');
     card.style.setProperty('--rotate', `${randomRotate()}deg`);
 
     // 图片区域（含骨架屏）
@@ -59,41 +66,95 @@ async function initDetail() {
 
     const img = document.createElement('img');
     img.alt = photoTitle || `${item.title} - ${i + 1}`;
-    img.loading = 'lazy';
-    img.onload = () => {
-      img.classList.add('img-loaded');
-      skeleton.classList.add('hidden');
-    };
-    img.src = src;
+    // 暂不设置 src，等分批加载时再设置
     imgWrap.appendChild(img);
     card.appendChild(imgWrap);
 
-    // 相框下栏（仅显示标题，描述在放大查看层展示）
+    // 相框下栏
     if (photoTitle) {
       const footer = document.createElement('div');
       footer.className = 'photo-card-footer';
-
-      const titleEl = document.createElement('div');
-      titleEl.className = 'photo-card-title';
-      titleEl.textContent = photoTitle;
-      footer.appendChild(titleEl);
-
+      const t = document.createElement('div');
+      t.className = 'photo-card-title';
+      t.textContent = photoTitle;
+      footer.appendChild(t);
       card.appendChild(footer);
     }
 
     // 点击放大
     card.addEventListener('click', () => {
-      openLightbox(i, detailItems);
+      openLightbox(i, _detailItems);
     });
 
     grid.appendChild(card);
+    // 列表用缩略图（高度 500px），lightbox 用原图
+    cards.push({ card, img, skeleton, src: ossThumb(detail.src, 500) });
   });
+
+  return cards;
 }
 
-// ===== 页面加载渐入 + 过渡遮罩消失 + 照片逐张入场 =====
-window.addEventListener('load', async () => {
-  // 先加载数据并渲染
-  await initDetail();
+// ===== 分批加载图片 + 逐张入场 =====
+function loadImagesInBatches(cards, batchSize) {
+  if (!cards || cards.length === 0) return;
+  batchSize = batchSize || 4;
+  let index = 0;
+
+  function loadBatch() {
+    const end = Math.min(index + batchSize, cards.length);
+    const promises = [];
+
+    for (let i = index; i < end; i++) {
+      const item = cards[i];
+      promises.push(new Promise((resolve) => {
+        item.img.onload = () => {
+          item.img.classList.add('img-loaded');
+          item.skeleton.classList.add('hidden');
+          // 图片加载完成后入场
+          requestAnimationFrame(() => {
+            item.card.classList.add('show');
+          });
+          resolve();
+        };
+        item.img.onerror = () => {
+          item.skeleton.classList.add('hidden');
+          item.card.classList.add('show');
+          resolve();
+        };
+        item.img.src = item.src;
+      }));
+    }
+
+    index = end;
+
+    // 当前批次全部完成（或超时 3 秒）后加载下一批
+    Promise.all(promises).then(() => {
+      if (index < cards.length) {
+        // 短暂间隔让浏览器喘息
+        setTimeout(loadBatch, 80);
+      }
+    });
+
+    // 超时保底：3 秒后无论如何继续下一批
+    setTimeout(() => {
+      if (index < cards.length) {
+        // 只有在 Promise.all 还没触发下一批时才执行
+        const nextStart = end;
+        if (index <= nextStart) {
+          index = nextStart;
+          loadBatch();
+        }
+      }
+    }, 3000);
+  }
+
+  loadBatch();
+}
+
+// ===== 页面加载渐入 + 分批加载照片 =====
+window.addEventListener('DOMContentLoaded', async () => {
+  // 先加载数据并创建 DOM（不加载图片）
+  const cards = await initDetail();
 
   // 过渡遮罩渐出
   const overlay = document.getElementById('pageOverlay');
@@ -108,31 +169,35 @@ window.addEventListener('load', async () => {
   if (header) header.classList.add('loaded');
   if (grid) grid.classList.add('loaded');
 
-  // 照片卡片逐张入场
-  const cards = document.querySelectorAll('.photo-card');
-  cards.forEach((card, i) => {
-    card.classList.add(i % 2 === 0 ? 'enter-left' : 'enter-right');
+  // 分批加载图片（每批 4 张，加载完入场，再加载下一批）
+  if (cards && cards.length > 0) {
+    // 短暂延迟让遮罩过渡和樱花初始化完成
     setTimeout(() => {
-      card.classList.add('show');
-    }, 400 + i * 120);
-  });
+      loadImagesInBatches(cards, 4);
+    }, 300);
+  }
 
   // ===== 自动缓慢下滑 =====
-  const totalEntryTime = 400 + cards.length * 120 + 600;
   let autoScrollId = null;
   let autoScrolling = false;
   let autoScrollPaused = false;
+  // 自动滚动使用节流：每 2 帧滚动一次，降低与 WebGL 的冲突
+  let autoScrollFrameCount = 0;
 
   function startAutoScroll() {
     if (autoScrolling || autoScrollPaused) return;
     autoScrolling = true;
+    autoScrollFrameCount = 0;
     autoScrollId = requestAnimationFrame(function tick() {
       if (!autoScrolling) return;
       if ((window.innerHeight + window.scrollY) >= document.body.scrollHeight - 2) {
         autoScrolling = false;
         return;
       }
-      window.scrollBy(0, 0.5);
+      autoScrollFrameCount++;
+      if (autoScrollFrameCount % 2 === 0) {
+        window.scrollBy(0, 1);
+      }
       autoScrollId = requestAnimationFrame(tick);
     });
   }
@@ -155,7 +220,8 @@ window.addEventListener('load', async () => {
 
   window._autoScroll = { start: startAutoScroll, stop: stopAutoScroll, pause: pauseAutoScroll, resume: resumeAutoScroll };
 
-  setTimeout(startAutoScroll, totalEntryTime);
+  // 延迟启动自动滚动（等首批图片加载完）
+  setTimeout(startAutoScroll, 3000);
 
   let lastScrollY = window.scrollY;
   window.addEventListener('scroll', () => {

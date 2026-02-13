@@ -24,6 +24,11 @@ async function initCylinder() {
     return;
   }
 
+  // 提前建立到 OSS 的连接
+  if (IMAGES.length > 0 && typeof ossPreconnect === 'function') {
+    ossPreconnect(IMAGES[0].src);
+  }
+
   buildCylinder(IMAGES);
 }
 
@@ -88,7 +93,8 @@ function buildCylinder(IMAGES) {
       img.classList.add('img-loaded');
       skeleton.classList.add('hidden');
     };
-    img.src = item.src;
+    // 封面用缩略图（高度 400px），减少流量和加载时间
+    img.src = (typeof ossThumb === 'function') ? ossThumb(item.src, 400) : item.src;
     panel.appendChild(img);
 
     // 标题说明
