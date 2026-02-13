@@ -1,3 +1,10 @@
+// ===== PWA Service Worker 注册 =====
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {});
+  });
+}
+
 // ===== 页面加载渐入 =====
 window.addEventListener('load', () => {
   const starfield = document.getElementById('starfield');
@@ -6,28 +13,33 @@ window.addEventListener('load', () => {
   if (skyfield) skyfield.classList.add('loaded');
   document.getElementById('mainContainer').classList.add('loaded');
 
-  // 提示文字逐字显现（页面加载 2.5 秒后开始，每字间隔 150ms）
+  // 提示文字逐字显现（减弱动画时一次性显示）
   const chars = document.querySelectorAll('.hint-char');
-  chars.forEach((ch, i) => {
-    setTimeout(() => ch.classList.add('show'), 2500 + i * 150);
-  });
-});
-
-// ===== 1. 鼠标跟随光晕 =====
-const cursorGlow = document.getElementById('cursorGlow');
-let mouseX = 0, mouseY = 0;
-
-document.addEventListener('mousemove', (e) => {
-  mouseX = e.clientX;
-  mouseY = e.clientY;
-  if (cursorGlow) {
-    cursorGlow.style.left = mouseX + 'px';
-    cursorGlow.style.top = mouseY + 'px';
-    if (!cursorGlow.classList.contains('visible')) {
-      cursorGlow.classList.add('visible');
-    }
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion) {
+    chars.forEach(ch => ch.classList.add('show'));
+  } else {
+    chars.forEach((ch, i) => {
+      setTimeout(() => ch.classList.add('show'), 2500 + i * 150);
+    });
   }
 });
+
+// ===== 1. 鼠标跟随光晕（仅精确指针设备，触屏不显示） =====
+(function () {
+  const cursorGlow = document.getElementById('cursorGlow');
+  if (!cursorGlow) return;
+  const prefersPointerFine = window.matchMedia('(pointer: fine)');
+  if (!prefersPointerFine.matches) {
+    cursorGlow.style.display = 'none';
+    return;
+  }
+  document.addEventListener('mousemove', (e) => {
+    cursorGlow.style.left = e.clientX + 'px';
+    cursorGlow.style.top = e.clientY + 'px';
+    if (!cursorGlow.classList.contains('visible')) cursorGlow.classList.add('visible');
+  });
+})();
 
 // ===== 3. 悬停区域交互增强 =====
 (function () {
@@ -45,8 +57,10 @@ document.addEventListener('mousemove', (e) => {
 // ===== 4. 偶发流星效果（仅夜间主题） =====
 (function () {
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function createShootingStar() {
+    if (reduceMotion) return;
     // 仅夜间主题下显示
     if (document.body.classList.contains('theme-day')) return;
 
@@ -71,7 +85,7 @@ document.addEventListener('mousemove', (e) => {
 
     document.body.appendChild(star);
 
-    star.animate([
+    const anim = star.animate([
       { transform: `translate(0, 0) rotate(${180 + angle}deg)`, opacity: 1 },
       { transform: `translate(${dx}px, ${dy}px) rotate(${180 + angle}deg)`, opacity: 0 }
     ], {
@@ -79,8 +93,7 @@ document.addEventListener('mousemove', (e) => {
       easing: 'ease-out',
       fill: 'forwards'
     });
-
-    setTimeout(() => star.remove(), 1200);
+    anim.finished.then(() => star.remove());
   }
 
   // 移动端降低流星频率（8~15秒），PC 端（3~8秒）
@@ -94,8 +107,7 @@ document.addEventListener('mousemove', (e) => {
     }, delay);
   }
 
-  // 页面加载后延迟开始
-  setTimeout(scheduleNext, isMobile ? 5000 : 3000);
+  if (!reduceMotion) setTimeout(scheduleNext, isMobile ? 5000 : 3000);
 })();
 
 // ===== 5. 手指图标磁吸倾斜 =====
@@ -154,6 +166,7 @@ document.getElementById('tapHitzone').addEventListener('click', (e) => {
 
 // ===== 粒子爆炸 =====
 function createExplosion(x, y) {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const colors = [
     'rgba(0, 195, 255, 0.9)',
@@ -163,8 +176,8 @@ function createExplosion(x, y) {
     'rgba(255, 255, 255, 0.6)'
   ];
 
-  // 移动端减少粒子数（30 → 15）
-  const count = isMobile ? 15 : 30;
+  const count = reduceMotion ? 0 : (isMobile ? 15 : 30);
+  if (count === 0) return;
   for (let i = 0; i < count; i++) {
     const particle = document.createElement('div');
     particle.className = 'explosion-particle';

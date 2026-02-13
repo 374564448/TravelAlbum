@@ -383,16 +383,19 @@ async function uploadPhotos(files) {
 
   let successCount = 0;
   let errorCount = 0;
+  const CONCURRENCY = 2; // 同时最多 2 个上传，避免过多并发
 
-  for (const file of files) {
-    try {
-      await uploadSingleFile(file);
-      successCount++;
-    } catch (e) {
-      errorCount++;
-      console.error(`上传 ${file.name} 失败:`, e.message);
-    }
-  }
+  const runNext = (queue, index) => {
+    if (index >= queue.length) return Promise.resolve();
+    const file = queue[index];
+    return uploadSingleFile(file)
+      .then(() => { successCount++; updateProgressUI(); })
+      .catch((e) => { errorCount++; console.error('上传 ' + file.name + ' 失败:', e.message); updateProgressUI(); })
+      .then(() => runNext(queue, index + CONCURRENCY));
+  };
+  const batch = [];
+  for (let i = 0; i < CONCURRENCY; i++) batch.push(runNext(files, i));
+  await Promise.all(batch);
 
   // 完成
   updateProgressUI();

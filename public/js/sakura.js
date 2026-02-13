@@ -244,8 +244,12 @@ function createPointFlowers() {
     useShader(pointFlower.program);
     pointFlower.offset = new Float32Array([0.0, 0.0, 0.0]);
     pointFlower.fader = Vector3.create(0.0, 10.0, 0.0);
-    // 移动端减少粒子数（1600 → 600）
-    pointFlower.numFlowers = sakuraIsMobile ? 600 : 1600;
+    var cores = typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? navigator.hardwareConcurrency : 4;
+    if (sakuraIsMobile) {
+      pointFlower.numFlowers = cores <= 2 ? 400 : 600;
+    } else {
+      pointFlower.numFlowers = cores <= 2 ? 800 : 1600;
+    }
     pointFlower.particles = new Array(pointFlower.numFlowers);
     pointFlower.dataArray = new Float32Array(pointFlower.numFlowers * (3 + 3 + 2));
     pointFlower.positionArrayOffset = 0;
@@ -560,7 +564,8 @@ function render() {
     renderScene();
 }
 
-var sakuraAnimating = true;
+var sakuraReduceMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var sakuraAnimating = !sakuraReduceMotion;
 var sakuraIsMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 var sakuraScale = 1.0; // 全终端高清渲染（含移动端）
 var sakuraFrameSkip = 0; // 跳帧计数器
@@ -602,7 +607,7 @@ window.addEventListener('load', function(e) {
     initScene();
     timeInfo.start = new Date();
     timeInfo.prev = timeInfo.start;
-    requestAnimationFrame(animate);
+    if (sakuraAnimating) requestAnimationFrame(animate);
 });
 
 // requestAnimationFrame polyfill

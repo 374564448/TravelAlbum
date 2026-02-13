@@ -66,7 +66,7 @@ async function initDetail() {
 
     const img = document.createElement('img');
     img.alt = photoTitle || `${item.title} - ${i + 1}`;
-    // 暂不设置 src，等分批加载时再设置
+    img.decoding = 'async';
     imgWrap.appendChild(img);
     card.appendChild(imgWrap);
 
@@ -95,9 +95,10 @@ async function initDetail() {
 }
 
 // ===== 分批加载图片 + 逐张入场 =====
-function loadImagesInBatches(cards, batchSize) {
+function loadImagesInBatches(cards, batchSize, reduceMotion) {
   if (!cards || cards.length === 0) return;
   batchSize = batchSize || 4;
+  reduceMotion = !!reduceMotion;
   let index = 0;
 
   function loadBatch() {
@@ -110,15 +111,15 @@ function loadImagesInBatches(cards, batchSize) {
         item.img.onload = () => {
           item.img.classList.add('img-loaded');
           item.skeleton.classList.add('hidden');
-          // 图片加载完成后入场
-          requestAnimationFrame(() => {
+          if (reduceMotion) {
             item.card.classList.add('show');
-          });
+          } else {
+            requestAnimationFrame(() => item.card.classList.add('show'));
+          }
           resolve();
         };
         item.img.onerror = () => {
           item.skeleton.classList.add('hidden');
-          // 显示加载失败占位
           var placeholder = document.createElement('div');
           placeholder.className = 'img-error-placeholder';
           placeholder.textContent = '图片加载失败';
@@ -158,28 +159,21 @@ function loadImagesInBatches(cards, batchSize) {
 
 // ===== 页面加载渐入 + 分批加载照片 =====
 window.addEventListener('DOMContentLoaded', async () => {
-  // 先加载数据并创建 DOM（不加载图片）
   const cards = await initDetail();
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 过渡遮罩渐出
   const overlay = document.getElementById('pageOverlay');
-  if (overlay) {
-    requestAnimationFrame(() => {
-      overlay.classList.remove('active');
-    });
-  }
+  if (overlay) requestAnimationFrame(() => overlay.classList.remove('active'));
 
   const header = document.getElementById('detailHeader');
   const grid = document.getElementById('photoGrid');
   if (header) header.classList.add('loaded');
   if (grid) grid.classList.add('loaded');
 
-  // 分批加载图片（每批 4 张，加载完入场，再加载下一批）
   if (cards && cards.length > 0) {
-    // 短暂延迟让遮罩过渡和樱花初始化完成
     setTimeout(() => {
-      loadImagesInBatches(cards, 4);
-    }, 300);
+      loadImagesInBatches(cards, 4, reduceMotion);
+    }, reduceMotion ? 0 : 300);
   }
 
   // ===== 自动缓慢下滑 =====
@@ -225,8 +219,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   window._autoScroll = { start: startAutoScroll, stop: stopAutoScroll, pause: pauseAutoScroll, resume: resumeAutoScroll };
 
-  // 延迟启动自动滚动（等首批图片加载完）
-  setTimeout(startAutoScroll, 3000);
+  if (!reduceMotion) setTimeout(startAutoScroll, 3000);
 
   let lastScrollY = window.scrollY;
   window.addEventListener('scroll', () => {
@@ -268,15 +261,21 @@ function typeDesc(text) {
   clearTyping();
   lightboxDesc.textContent = '';
   if (!text) return;
-  let i = 0;
-  typeTimer = setInterval(() => {
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion || text.length > 80) {
+    lightboxDesc.textContent = text;
+    return;
+  }
+  var interval = text.length > 40 ? 60 : 150;
+  var i = 0;
+  typeTimer = setInterval(function () {
     lightboxDesc.textContent += text[i];
     i++;
     if (i >= text.length) {
       clearInterval(typeTimer);
       typeTimer = null;
     }
-  }, 150);
+  }, interval);
 }
 
 function updateCounter() {
@@ -337,6 +336,21 @@ function openLightbox(index, details) {
   void lightbox.offsetWidth;
   lightbox.classList.add('active');
   showSwipeHint();
+  preloadAdjacent();
+}
+
+function preloadAdjacent() {
+  if (!currentDetails || currentDetails.length === 0) return;
+  var prev = currentIndex - 1;
+  var next = currentIndex + 1;
+  if (prev >= 0 && currentDetails[prev]) {
+    var u = typeof currentDetails[prev] === 'string' ? currentDetails[prev] : currentDetails[prev].src;
+    if (u) { var img = new Image(); img.src = u; }
+  }
+  if (next < currentDetails.length && currentDetails[next]) {
+    var u = typeof currentDetails[next] === 'string' ? currentDetails[next] : currentDetails[next].src;
+    if (u) { var img = new Image(); img.src = u; }
+  }
 }
 
 function switchTo(index) {
@@ -347,19 +361,21 @@ function switchTo(index) {
   const frame = document.getElementById('lightboxFrame');
   frame.style.transition = 'opacity 0.25s ease';
   frame.style.opacity = '0';
-  setTimeout(() => {
+  setTimeout(function () {
     lightboxImg.src = detail.src;
     updateLightboxInfo(detail);
-    lightboxImg.onload = () => {
+    function showFrame() {
       frame.style.opacity = '1';
-      setTimeout(() => {
-        frame.style.transition = '';
-      }, 300);
-    };
-    if (lightboxImg.complete) {
-      frame.style.opacity = '1';
-      setTimeout(() => { frame.style.transition = ''; }, 300);
+      setTimeout(function () { frame.style.transition = ''; }, 300);
     }
+    if (lightboxImg.complete) {
+      showFrame();
+    } else if (lightboxImg.decode) {
+      lightboxImg.decode().then(showFrame).catch(showFrame);
+    } else {
+      lightboxImg.onload = showFrame;
+    }
+    preloadAdjacent();
   }, 250);
 }
 
@@ -504,13 +520,19 @@ document.addEventListener('keydown', (e) => {
 (function () {
   const bar = document.getElementById('scrollProgress');
   if (!bar) return;
-  function updateProgress() {
-    const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+  var progressRaf = null;
+  function setBarWidth() {
+    var scrollTop = window.scrollY || document.documentElement.scrollTop;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var percent = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
     bar.style.width = Math.min(percent, 100) + '%';
+    progressRaf = null;
+  }
+  function updateProgress() {
+    if (progressRaf) return;
+    progressRaf = requestAnimationFrame(setBarWidth);
   }
   window.addEventListener('scroll', updateProgress, { passive: true });
   window.addEventListener('resize', updateProgress, { passive: true });
-  updateProgress();
+  setBarWidth();
 })();

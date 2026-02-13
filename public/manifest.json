@@ -1,0 +1,17 @@
+{
+  "name": "Travel Album",
+  "short_name": "Travel Album",
+  "description": "交互式 3D 旅行相册",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon/hand.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

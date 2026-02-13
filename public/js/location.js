@@ -154,57 +154,46 @@ function buildCylinder(IMAGES) {
 
 // ===== 页面加载：遮罩渐出 → 内容渐入 → 卡牌展开 =====
 window.addEventListener('load', async () => {
-  // 先加载数据并生成圆柱
   await initCylinder();
 
   const overlay = document.getElementById('pageOverlay');
   const wrapper = document.getElementById('cylinderWrapper');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // 1. 遮罩渐出（0.8s）
-  if (overlay) {
-    requestAnimationFrame(() => {
-      overlay.classList.remove('active');
-    });
-  }
+  if (overlay) requestAnimationFrame(() => overlay.classList.remove('active'));
 
-  // 2. 遮罩消退后展示内容 + 触发卡牌展开
-  const overlayDuration = 800;
+  const overlayDuration = reduceMotion ? 200 : 800;
   setTimeout(() => {
     wrapper.classList.add('loaded');
   }, overlayDuration * 0.3);
 
-  // 3. 等内容可见后触发卡牌展开
   setTimeout(() => {
     document.querySelectorAll('.cylinder-panel').forEach(p => p.classList.add('spread'));
-  }, overlayDuration + 400);
+  }, overlayDuration + (reduceMotion ? 0 : 400));
 
-  // 计算展开动画总时长
-  const totalSpreadTime = overlayDuration + 400 + IMAGES.length * 120 + 1600;
+  const totalSpreadTime = reduceMotion
+    ? overlayDuration + 300
+    : overlayDuration + 400 + IMAGES.length * 120 + 1600;
 
-  // 操作提示延迟显示，5秒后自动淡出
   setTimeout(() => {
     const hint = document.getElementById('dragHint');
     if (hint) {
       hint.classList.add('loaded');
-      setTimeout(() => {
-        hint.classList.add('fade-away');
-      }, 5000);
+      if (!reduceMotion) setTimeout(() => hint.classList.add('fade-away'), 5000);
     }
   }, totalSpreadTime);
 
-  // ===== 3D 圆柱交互 =====
-  initCylinderInteraction(totalSpreadTime);
-
+  initCylinderInteraction(totalSpreadTime, reduceMotion);
 });
 
 // ===== 3D 圆柱交互（独立函数） =====
-function initCylinderInteraction(totalSpreadTime) {
+function initCylinderInteraction(totalSpreadTime, reduceMotion) {
   const cylinder = document.getElementById('cylinder');
   const wrapper = document.getElementById('cylinderWrapper');
   if (!cylinder || !wrapper) return;
 
   let rotateY = 0;
-  let rotateX = -10;
+  let rotateX = reduceMotion ? 0 : -10;
   let isDragging = false;
   let lastMouseX = 0;
   let lastMouseY = 0;
@@ -216,12 +205,17 @@ function initCylinderInteraction(totalSpreadTime) {
   let autoSpeed = -(baseLinearSpeed / r) * (180 / Math.PI) / 60;
 
   let isCorrectingAngle = false;
+  const duration = reduceMotion ? 0 : 1500;
   setTimeout(() => {
     if (isDragging) return;
+    if (reduceMotion) {
+      rotateX = 0;
+      updateTransform();
+      return;
+    }
     isCorrectingAngle = true;
     const startX = rotateX;
     const targetX = 0;
-    const duration = 1500;
     const startTime = performance.now();
 
     function correctAngle(now) {

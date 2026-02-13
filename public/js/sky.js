@@ -10,6 +10,7 @@
 
   // 移动端检测，减少云朵数量
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const CLOUD_COUNT = isMobile ? 6 : 12;
 
   // 缓存：天空背景 + 云朵 puff 模板
@@ -113,21 +114,20 @@
 
       ctx.restore();
 
-      cloud.x += cloud.speed;
-      if (cloud.x > canvas.width + 250) {
-        cloud.x = -250;
-        cloud.y = Math.random() * canvas.height * 0.65;
+      if (!reduceMotion) {
+        cloud.x += cloud.speed;
+        if (cloud.x > canvas.width + 250) {
+          cloud.x = -250;
+          cloud.y = Math.random() * canvas.height * 0.65;
+        }
       }
     });
   }
 
   function animate() {
     if (!running) return;
-
-    // 使用缓存的天空背景（而非每帧重建渐变）
     if (!skyCache) cacheSky();
     ctx.drawImage(skyCache, 0, 0);
-
     drawClouds();
     animId = requestAnimationFrame(animate);
   }
@@ -135,6 +135,12 @@
   function start() {
     if (running) return;
     running = true;
+    if (reduceMotion) {
+      if (!skyCache) cacheSky();
+      ctx.drawImage(skyCache, 0, 0);
+      drawClouds();
+      return;
+    }
     animId = requestAnimationFrame(animate);
   }
 

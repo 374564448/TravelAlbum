@@ -13,7 +13,7 @@ migrate();
 // ===== 用户端应用 =====
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1d' }));
 
 const apiRoutes = require('./routes/api');
 app.use('/api', apiRoutes);
@@ -25,7 +25,7 @@ app.listen(PORT, () => {
 // ===== 管理后台应用 =====
 const adminApp = express();
 adminApp.use(express.json());
-adminApp.use(express.static(path.join(__dirname, 'admin')));
+adminApp.use(express.static(path.join(__dirname, 'admin'), { maxAge: '1d' }));
 
 const adminRoutes = require('./routes/admin');
 adminApp.use('/api', adminRoutes);

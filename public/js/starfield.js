@@ -10,6 +10,7 @@
 
   // 移动端检测，减少粒子数量
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const STAR_COUNT = isMobile ? 80 : 180;
 
   // 缓存背景径向渐变
@@ -56,13 +57,11 @@
 
   function drawStars(time) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 使用缓存的背景渐变
     if (!bgCache) cacheBg();
     ctx.drawImage(bgCache, 0, 0);
-
+    const noMotion = reduceMotion;
     stars.forEach(star => {
-      const twinkle = Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.4 + 0.6;
+      const twinkle = noMotion ? 1 : (Math.sin(time * star.twinkleSpeed + star.twinklePhase) * 0.4 + 0.6);
       const alpha = star.opacity * twinkle;
 
       ctx.beginPath();
@@ -78,13 +77,13 @@
         ctx.fill();
       }
 
-      // 缓慢漂浮
-      star.y -= star.speed;
-      star.x += Math.sin(time * 0.001 + star.twinklePhase) * 0.1;
-
-      if (star.y < -5) {
-        star.y = canvas.height + 5;
-        star.x = Math.random() * canvas.width;
+      if (!noMotion) {
+        star.y -= star.speed;
+        star.x += Math.sin(time * 0.001 + star.twinklePhase) * 0.1;
+        if (star.y < -5) {
+          star.y = canvas.height + 5;
+          star.x = Math.random() * canvas.width;
+        }
       }
     });
   }
@@ -98,6 +97,10 @@
   function start() {
     if (running) return;
     running = true;
+    if (reduceMotion) {
+      drawStars(0);
+      return;
+    }
     animId = requestAnimationFrame(animate);
   }
 
