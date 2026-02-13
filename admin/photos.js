@@ -495,7 +495,7 @@ function initDragSort(container, selector, onSort) {
     dragItem.classList.remove('dragging');
     dragItem.style.pointerEvents = '';
     var ids = [...container.querySelectorAll(selector)].map(function(el) { return el.dataset.id; });
-    var changed = !orderBeforeDrag || ids.length !== orderBeforeDrag.length || ids.some(function(id, i) { return id !== orderBeforeDrag[i]; });
+    var changed = orderBeforeDrag && (ids.length !== orderBeforeDrag.length || ids.some(function(id, i) { return id !== orderBeforeDrag[i]; }));
     dragItem = null;
     orderBeforeDrag = null;
     if (changed) onSort(ids);
