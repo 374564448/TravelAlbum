@@ -525,12 +525,15 @@ function initDragSort(container, selector, onSort) {
       }
     });
 
-    // 移动端触摸拖拽
+    // 移动端触摸拖拽（悬浮克隆跟随手指，与桌面端一致）
     item.addEventListener('touchstart', function(e) {
       if (e.touches.length !== 1) return;
       var startX = e.touches[0].clientX;
       var startY = e.touches[0].clientY;
       var moved = false;
+      var ghost = null;
+      var touchOffsetX = 0;
+      var touchOffsetY = 0;
       dragItem = item;
       orderBeforeDrag = [...container.querySelectorAll(selector)].map(function(el) { return el.dataset.id; });
       item.classList.add('dragging');
@@ -544,8 +547,20 @@ function initDragSort(container, selector, onSort) {
           var dy = Math.abs(t.clientY - startY);
           if (dx < 10 && dy < 10) return;
           moved = true;
+          var rect = dragItem.getBoundingClientRect();
+          touchOffsetX = t.clientX - rect.left;
+          touchOffsetY = t.clientY - rect.top;
+          ghost = dragItem.cloneNode(true);
+          ghost.classList.add('admin-drag-ghost');
+          ghost.style.cssText = 'position:fixed;left:' + rect.left + 'px;top:' + rect.top + 'px;width:' + rect.width + 'px;height:' + rect.height + 'px;z-index:9999;pointer-events:none;box-shadow:0 14px 40px rgba(0,0,0,0.25);transform:translateY(-8px) scale(1.05);transition:none;opacity:0.98;border-radius:var(--radius,8px);overflow:hidden;';
+          document.body.appendChild(ghost);
+          dragItem.style.opacity = '0';
         }
         ev.preventDefault();
+        if (ghost) {
+          ghost.style.left = (t.clientX - touchOffsetX) + 'px';
+          ghost.style.top = (t.clientY - touchOffsetY) + 'px';
+        }
         var under = document.elementFromPoint(t.clientX, t.clientY);
         var target = under ? under.closest(selector) : null;
         if (!target || target === dragItem) return;
@@ -561,6 +576,8 @@ function initDragSort(container, selector, onSort) {
         document.removeEventListener('touchmove', onTouchMove, { passive: false });
         document.removeEventListener('touchend', onTouchEnd);
         document.removeEventListener('touchcancel', onTouchEnd);
+        if (ghost && ghost.parentNode) ghost.parentNode.removeChild(ghost);
+        if (dragItem) dragItem.style.opacity = '';
         finishDrag();
       }
       document.addEventListener('touchmove', onTouchMove, { passive: false });
