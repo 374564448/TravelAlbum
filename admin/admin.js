@@ -234,7 +234,7 @@ function renderLocations(locations) {
   locationsList.innerHTML = locations.map(loc => `
     <div class="location-card" draggable="true" data-id="${loc.id}">
       ${loc.cover
-        ? `<img class="card-cover" src="${loc.cover}" alt="${loc.title}">`
+        ? `<img class="card-cover" src="${loc.cover}" alt="${loc.title}" draggable="false">`
         : `<div class="card-cover-placeholder">🏞</div>`
       }
       <div class="card-info">
@@ -464,6 +464,7 @@ function initDragSort(container, selector, onSort) {
   let dragItem = null;
 
   container.querySelectorAll(selector).forEach(item => {
+    item.addEventListener('contextmenu', (e) => { if (!e.target.closest('button')) e.preventDefault(); });
     item.addEventListener('dragstart', (e) => {
       dragItem = item;
       item.classList.add('dragging');

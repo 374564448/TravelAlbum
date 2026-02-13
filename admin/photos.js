@@ -189,7 +189,7 @@ function renderPhotos(photos) {
 
   photosList.innerHTML = photos.map(p => `
     <div class="photo-card" draggable="true" data-id="${p.id}">
-      <img src="${p.url}" alt="${escapeHtml(p.title || '')}" loading="lazy">
+      <img src="${p.url}" alt="${escapeHtml(p.title || '')}" loading="lazy" draggable="false">
       <div class="photo-info">${escapeHtml(p.title || '无标题')}</div>
       <div class="photo-actions">
         <button class="btn btn-sm btn-outline" onclick="openEditPhoto(${p.id}, '${escapeJs(p.title || '')}', '${escapeJs(p.desc || '')}')">编辑</button>
@@ -490,6 +490,7 @@ function initDragSort(container, selector, onSort) {
   let dragItem = null;
 
   container.querySelectorAll(selector).forEach(item => {
+    item.addEventListener('contextmenu', (e) => { if (!e.target.closest('button')) e.preventDefault(); });
     item.addEventListener('dragstart', (e) => {
       dragItem = item;
       item.classList.add('dragging');
