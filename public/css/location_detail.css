@@ -345,6 +345,7 @@ canvas#sakura {
   letter-spacing: 0.5px;
   line-height: 1.4;
   margin-top: 3px;
+  white-space: pre-wrap;
 }
 
 /* footer 隐藏时不占空间 */
