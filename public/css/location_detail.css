@@ -7,10 +7,15 @@
 body {
   background: #0a0a0a;
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
   user-select: none;
   overflow-x: hidden;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  /* iPhone 横屏安全区域 */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
 /* ===== 樱花飘落背景 ===== */
@@ -34,6 +39,8 @@ canvas#sakura {
   display: flex;
   align-items: center;
   padding: 18px 30px;
+  padding-left: calc(30px + env(safe-area-inset-left, 0px));
+  padding-right: calc(30px + env(safe-area-inset-right, 0px));
   background: linear-gradient(to bottom, rgba(10, 10, 10, 0.9) 0%, rgba(10, 10, 10, 0) 100%);
   opacity: 0;
   transition: opacity 1.5s ease-in;
@@ -79,6 +86,9 @@ canvas#sakura {
   align-items: flex-start;
   gap: 24px;
   padding: 90px 30px 60px;
+  padding-left: calc(30px + env(safe-area-inset-left, 0px));
+  padding-right: calc(30px + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   opacity: 0;
   transition: opacity 1.5s ease-in 0.3s;
 }
@@ -273,8 +283,9 @@ canvas#sakura {
   opacity: 0;
   transition: transform 0.5s ease-out,
               opacity 0.4s ease;
-  max-width: 90vw;
+  max-width: calc(90vw - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
   max-height: 92vh;
+  max-height: 92dvh;
   cursor: grab;
 }
 
@@ -309,6 +320,7 @@ canvas#sakura {
   display: block;
   max-width: 86vw;
   max-height: 76vh;
+  max-height: 76dvh;
   object-fit: contain;
   border-radius: 4px;
 }
@@ -429,6 +441,82 @@ canvas#sakura {
     font-size: 15px;
     letter-spacing: 4px;
     font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+}
+
+/* ===== 移动端横屏适配（高度较小的设备） ===== */
+@media (max-height: 500px) {
+  .detail-header {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  .back-btn {
+    font-size: 13px;
+  }
+  .detail-title {
+    font-size: 15px;
+    letter-spacing: 2px;
+    margin-right: 40px;
+  }
+  .photo-grid {
+    gap: 16px;
+    padding-top: 60px;
+    padding-bottom: 40px;
+  }
+  .photo-card-img img {
+    height: 180px;
+  }
+  .photo-card-img {
+    min-height: 180px;
+  }
+  /* lightbox 在矮屏上优化 */
+  .lightbox-frame {
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .lightbox-img {
+    max-height: 80dvh;
+    max-width: 90vw;
+  }
+  .lightbox-frame-footer {
+    padding: 6px 6px 2px;
+  }
+  .lightbox-frame-title {
+    font-size: 13px;
+  }
+  .lightbox-frame-desc {
+    font-size: 11px;
+  }
+  .lightbox-counter {
+    top: 10px;
+    font-size: 12px;
+  }
+  .scroll-progress {
+    height: 2px;
+  }
+}
+
+/* iPhone 横屏特殊适配（矮且宽） */
+@media (max-height: 440px) and (min-width: 700px) {
+  .photo-grid {
+    padding-top: 50px;
+    padding-bottom: 30px;
+    gap: 14px;
+  }
+  .photo-card-img img {
+    height: 160px;
+  }
+  .photo-card-img {
+    min-height: 160px;
+  }
+  .lightbox-frame {
+    padding: 6px;
+  }
+  .lightbox-img {
+    max-height: 84dvh;
+  }
+  .lightbox-frame-footer {
+    padding: 4px 4px 1px;
   }
 }
 

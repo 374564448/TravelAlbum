@@ -13,6 +13,16 @@
   --border: #e2e5ee;
   --radius: 10px;
   --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  /* iPhone 安全区域 */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html, body {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 body {
@@ -20,6 +30,8 @@ body {
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  padding-top: var(--safe-top);
+  padding-bottom: var(--safe-bottom);
 }
 
 /* ===== 页面切换 ===== */
@@ -43,7 +55,7 @@ body {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.15);
   width: 380px;
-  max-width: 90vw;
+  max-width: calc(100vw - 32px);
   text-align: center;
 }
 
@@ -191,15 +203,23 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .top-bar h2 {
   font-size: 18px;
   font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .top-bar-right {
   position: relative;
+  flex-shrink: 0;
+  margin-left: 12px;
 }
 
 /* ===== 用户下拉菜单 ===== */
@@ -216,6 +236,7 @@ body {
   font-weight: 500;
   color: var(--text);
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .user-dropdown-trigger:hover {
@@ -502,9 +523,11 @@ body {
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
   width: 440px;
-  max-width: 90vw;
-  max-height: 90vh;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-body h3 {
@@ -708,6 +731,7 @@ body {
 .crop-modal-body {
   width: 80vw;
   max-width: 900px;
+  max-width: min(900px, calc(100vw - 24px));
 }
 
 .crop-hint {
@@ -774,11 +798,19 @@ body {
   }
   .location-card .card-actions .btn-sm {
     font-size: 11px;
+    padding: 4px 6px;
   }
   .photo-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     padding: 0 12px 12px;
+  }
+  .photo-card img {
+    height: 120px;
+  }
+  .photo-card .photo-actions {
+    gap: 6px;
+    padding: 6px 10px 10px;
   }
   .upload-progress-panel {
     margin: 0 12px 10px;
@@ -786,10 +818,103 @@ body {
   .toolbar {
     padding: 12px;
   }
+  .upload-area {
+    padding: 16px 12px;
+  }
+  .upload-area p {
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
   .top-bar {
-    padding: 12px 16px;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .top-bar-left {
+    gap: 8px;
+  }
+  .top-bar h2 {
+    font-size: 15px;
+  }
+  .user-dropdown-trigger {
+    padding: 5px 10px;
+    font-size: 12px;
+    gap: 4px;
+  }
+  .user-dropdown-menu {
+    min-width: 130px;
+  }
+  .user-dropdown-menu button {
+    padding: 9px 14px;
+    font-size: 13px;
+  }
+  .login-card {
+    padding: 36px 24px;
+  }
+  .login-card h1 {
+    font-size: 24px;
   }
   .modal-body {
-    padding: 24px 20px;
+    padding: 24px 16px;
+    border-radius: 12px;
+  }
+  .modal-body h3 {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  .modal-actions {
+    margin-top: 20px;
+  }
+  .crop-modal-body {
+    width: calc(100vw - 16px);
+  }
+  .crop-hint {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  .cover-upload-area {
+    max-height: 280px;
+  }
+  .toast {
+    left: 16px;
+    right: 16px;
+    transform: translateX(0) translateY(100px);
+    text-align: center;
+    font-size: 13px;
+    padding: 10px 16px;
+  }
+  .toast.show {
+    transform: translateX(0) translateY(0);
+  }
+  .empty-state {
+    padding: 40px 16px;
+  }
+  .empty-state .empty-icon {
+    font-size: 36px;
+  }
+  .btn-ghost {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* iPhone 小屏幕额外适配（如 iPhone SE / 12 mini 等） */
+@media (max-width: 375px) {
+  .card-grid {
+    gap: 8px;
+    padding: 0 8px 8px;
+  }
+  .location-card .card-actions .btn-sm {
+    font-size: 10px;
+    padding: 3px 4px;
+  }
+  .top-bar {
+    padding: 8px 10px;
+  }
+  .top-bar h2 {
+    font-size: 14px;
+  }
+  .user-dropdown-trigger {
+    padding: 4px 8px;
+    font-size: 11px;
   }
 }
