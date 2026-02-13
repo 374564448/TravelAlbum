@@ -111,9 +111,11 @@ TravelAlbum/
 ├── .gitignore
 ├── DEPLOY.md                 # 阿里云部署指南
 ├── admin/                    # 管理后台 UI
-│   ├── index.html
-│   ├── admin.css
-│   └── admin.js
+│   ├── index.html            # 登录 + 地点管理
+│   ├── photos.html           # 照片管理
+│   ├── admin.css             # 共享样式
+│   ├── admin.js              # 地点管理逻辑
+│   └── photos.js             # 照片管理逻辑
 ├── data/
 │   ├── locations.json        # 初始数据（首次启动自动导入 SQLite）
 │   └── travel.db             # SQLite 数据库（自动生成）
