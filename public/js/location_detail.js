@@ -118,6 +118,11 @@ function loadImagesInBatches(cards, batchSize) {
         };
         item.img.onerror = () => {
           item.skeleton.classList.add('hidden');
+          // 显示加载失败占位
+          var placeholder = document.createElement('div');
+          placeholder.className = 'img-error-placeholder';
+          placeholder.textContent = '图片加载失败';
+          item.img.parentNode.replaceChild(placeholder, item.img);
           item.card.classList.add('show');
           resolve();
         };

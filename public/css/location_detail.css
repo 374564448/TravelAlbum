@@ -138,15 +138,14 @@ canvas#sakura {
   border-radius: 3px;
   line-height: 0;
   position: relative;
-  min-width: 160px;
-  min-height: 220px;
+  /* 不设固定 min-width，宽度由图片自然决定 */
 }
 
 .photo-card-img img {
   display: block;
-  height: 220px;
+  max-height: 220px;
   width: auto;
-  object-fit: contain;
+  height: auto;
   opacity: 0;
   transition: opacity 0.5s ease;
 }
@@ -155,13 +154,10 @@ canvas#sakura {
   opacity: 1;
 }
 
-/* 骨架屏占位 */
+/* 骨架屏占位（固定尺寸，图片加载后隐藏） */
 .skeleton {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  width: 150px;
+  height: 220px;
   border-radius: 3px;
   background: linear-gradient(110deg, #e8e8e8 8%, #f5f5f5 18%, #e8e8e8 33%);
   background-size: 200% 100%;
@@ -169,9 +165,20 @@ canvas#sakura {
 }
 
 .skeleton.hidden {
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
+  display: none;
+}
+
+/* 图片加载失败占位 */
+.img-error-placeholder {
+  width: 150px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f0f0;
+  border-radius: 3px;
+  color: #bbb;
+  font-size: 12px;
 }
 
 @keyframes skeletonShimmer {
@@ -329,6 +336,11 @@ canvas#sakura {
 .lightbox-frame-footer {
   padding: 8px 8px 4px;
   text-align: center;
+  /* 宽度跟随图片，不反向撑宽相框 */
+  width: 0;
+  min-width: 100%;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .lightbox-frame-title {
@@ -465,10 +477,13 @@ canvas#sakura {
     padding-bottom: 40px;
   }
   .photo-card-img img {
+    max-height: 180px;
+  }
+  .skeleton {
     height: 180px;
   }
-  .photo-card-img {
-    min-height: 180px;
+  .img-error-placeholder {
+    height: 180px;
   }
   /* lightbox 在矮屏上优化 */
   .lightbox-frame {
@@ -505,10 +520,13 @@ canvas#sakura {
     gap: 14px;
   }
   .photo-card-img img {
+    max-height: 160px;
+  }
+  .skeleton {
     height: 160px;
   }
-  .photo-card-img {
-    min-height: 160px;
+  .img-error-placeholder {
+    height: 160px;
   }
   .lightbox-frame {
     padding: 6px;
