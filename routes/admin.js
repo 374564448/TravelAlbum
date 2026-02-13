@@ -31,6 +31,31 @@ router.post('/login', (req, res) => {
 // ===== 以下接口均需鉴权 =====
 router.use(authMiddleware);
 
+// ===== 修改密码 =====
+router.put('/change-password', (req, res) => {
+  const { username, oldPassword, newPassword } = req.body;
+  if (!username || !oldPassword || !newPassword) {
+    return res.status(400).json({ error: '请填写完整信息' });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: '新密码长度不能少于 6 位' });
+  }
+
+  const admin = db.getAdminByUsername(username);
+  if (!admin) {
+    return res.status(400).json({ error: '账号不存在' });
+  }
+
+  const match = bcrypt.compareSync(oldPassword, admin.password_hash);
+  if (!match) {
+    return res.status(400).json({ error: '当前密码错误' });
+  }
+
+  const newHash = bcrypt.hashSync(newPassword, 10);
+  db.updateAdminPassword(username, newHash);
+  res.json({ message: '密码修改成功' });
+});
+
 // ===== 地点列表 =====
 router.get('/locations', (req, res) => {
   const locations = db.getAllLocations();

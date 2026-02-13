@@ -198,6 +198,93 @@ body {
   font-weight: 600;
 }
 
+.top-bar-right {
+  position: relative;
+}
+
+/* ===== 用户下拉菜单 ===== */
+.user-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.15s;
+}
+
+.user-dropdown-trigger:hover {
+  background: rgba(0,0,0,0.03);
+  border-color: #ccc;
+}
+
+.user-dropdown-trigger .dropdown-arrow {
+  font-size: 10px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.user-dropdown.open .dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 6px;
+  min-width: 140px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 200;
+  overflow: hidden;
+}
+
+.user-dropdown.open .user-dropdown-menu {
+  display: block;
+}
+
+.user-dropdown-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+  text-align: left;
+}
+
+.user-dropdown-menu button:hover {
+  background: rgba(0,0,0,0.04);
+}
+
+.user-dropdown-menu button.menu-danger {
+  color: var(--danger);
+}
+
+.user-dropdown-menu button.menu-danger:hover {
+  background: rgba(231, 76, 90, 0.06);
+}
+
+.user-dropdown-menu .menu-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 0;
+}
+
 /* ===== 主页面 ===== */
 #main-page {
   flex-direction: column;

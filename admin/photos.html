@@ -18,7 +18,16 @@
         <h2 id="page-title">照片管理</h2>
       </div>
       <div class="top-bar-right">
-        <button id="logout-btn" class="btn btn-ghost">退出登录</button>
+        <div class="user-dropdown" id="user-dropdown">
+          <button class="user-dropdown-trigger" id="dropdown-trigger">
+            管理员 <span class="dropdown-arrow">▼</span>
+          </button>
+          <div class="user-dropdown-menu">
+            <button id="change-pwd-btn">🔑 修改密码</button>
+            <div class="menu-divider"></div>
+            <button id="logout-btn" class="menu-danger">🚪 退出登录</button>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -63,6 +72,35 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" id="photo-cancel">取消</button>
         <button class="btn btn-primary" id="photo-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 模态框：修改密码 ===== -->
+  <div id="pwd-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-body">
+      <h3>修改密码</h3>
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="pwd-username" placeholder="请输入账号">
+      </div>
+      <div class="form-group">
+        <label>当前密码</label>
+        <input type="password" id="pwd-old" placeholder="请输入当前密码" autocomplete="current-password">
+      </div>
+      <div class="form-group">
+        <label>新密码</label>
+        <input type="password" id="pwd-new" placeholder="请输入新密码（至少 6 位）" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>确认新密码</label>
+        <input type="password" id="pwd-confirm" placeholder="再次输入新密码" autocomplete="new-password">
+      </div>
+      <p id="pwd-error" class="error-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="pwd-cancel">取消</button>
+        <button class="btn btn-primary" id="pwd-save">确认修改</button>
       </div>
     </div>
   </div>

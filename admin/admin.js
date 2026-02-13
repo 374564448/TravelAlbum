@@ -132,6 +132,84 @@ logoutBtn.addEventListener('click', () => {
   showLogin();
 });
 
+// ===== 用户下拉菜单 =====
+
+const userDropdown = document.getElementById('user-dropdown');
+const dropdownTrigger = document.getElementById('dropdown-trigger');
+
+dropdownTrigger.addEventListener('click', (e) => {
+  e.stopPropagation();
+  userDropdown.classList.toggle('open');
+});
+
+document.addEventListener('click', () => {
+  userDropdown.classList.remove('open');
+});
+
+userDropdown.querySelector('.user-dropdown-menu').addEventListener('click', (e) => {
+  e.stopPropagation();
+});
+
+// ===== 修改密码 =====
+
+const changePwdBtn = document.getElementById('change-pwd-btn');
+const pwdModal = document.getElementById('pwd-modal');
+const pwdUsername = document.getElementById('pwd-username');
+const pwdOld = document.getElementById('pwd-old');
+const pwdNew = document.getElementById('pwd-new');
+const pwdConfirm = document.getElementById('pwd-confirm');
+const pwdError = document.getElementById('pwd-error');
+const pwdSave = document.getElementById('pwd-save');
+const pwdCancel = document.getElementById('pwd-cancel');
+
+changePwdBtn.addEventListener('click', () => {
+  userDropdown.classList.remove('open');
+  pwdUsername.value = '';
+  pwdOld.value = '';
+  pwdNew.value = '';
+  pwdConfirm.value = '';
+  pwdError.textContent = '';
+  pwdModal.classList.add('active');
+});
+
+pwdCancel.addEventListener('click', () => pwdModal.classList.remove('active'));
+
+pwdSave.addEventListener('click', async () => {
+  pwdError.textContent = '';
+  const username = pwdUsername.value.trim();
+  const oldPassword = pwdOld.value;
+  const newPassword = pwdNew.value;
+  const confirmPassword = pwdConfirm.value;
+
+  if (!username) { pwdError.textContent = '请输入账号'; return; }
+  if (!oldPassword) { pwdError.textContent = '请输入当前密码'; return; }
+  if (!newPassword) { pwdError.textContent = '请输入新密码'; return; }
+  if (newPassword.length < 6) { pwdError.textContent = '新密码长度不能少于 6 位'; return; }
+  if (newPassword !== confirmPassword) { pwdError.textContent = '两次输入的新密码不一致'; return; }
+
+  try {
+    pwdSave.disabled = true;
+    pwdSave.textContent = '提交中...';
+    await request('/change-password', {
+      method: 'PUT',
+      body: JSON.stringify({ username, oldPassword, newPassword })
+    });
+    showToast('密码修改成功，请重新登录');
+    pwdModal.classList.remove('active');
+    // 修改成功后退出，让用户用新密码登录
+    setTimeout(() => {
+      token = '';
+      localStorage.removeItem('admin_token');
+      showLogin();
+    }, 1500);
+  } catch (e) {
+    pwdError.textContent = e.message || '修改失败';
+  } finally {
+    pwdSave.disabled = false;
+    pwdSave.textContent = '确认修改';
+  }
+});
+
 // ===== 地点管理 =====
 
 async function loadLocations() {
