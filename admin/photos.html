@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>照片管理 - Travel Album</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- ===== 主页面 ===== -->
+  <div id="main-page" class="page active">
+
+    <!-- 顶部导航 -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <button id="back-btn" class="btn btn-ghost">← 返回</button>
+        <h2 id="page-title">照片管理</h2>
+      </div>
+      <div class="top-bar-right">
+        <button id="logout-btn" class="btn btn-ghost">退出登录</button>
+      </div>
+    </header>
+
+    <!-- 上传区域 -->
+    <div class="toolbar">
+      <div class="upload-area" id="upload-area">
+        <input type="file" id="photo-upload" multiple accept="image/*" hidden>
+        <p>将照片拖拽到此处，或 <button class="btn btn-primary btn-sm" id="upload-btn">点击上传</button></p>
+      </div>
+    </div>
+
+    <!-- 照片列表 -->
+    <div id="photos-list" class="photo-grid"></div>
+
+  </div>
+
+  <!-- ===== 模态框：编辑照片 ===== -->
+  <div id="photo-modal" class="modal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-body">
+      <h3>编辑照片</h3>
+      <div class="form-group">
+        <label>照片标题</label>
+        <input type="text" id="photo-title" placeholder="照片标题（可选）">
+      </div>
+      <div class="form-group">
+        <label>照片描述</label>
+        <textarea id="photo-desc" rows="3" placeholder="照片描述（可选）"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="photo-cancel">取消</button>
+        <button class="btn btn-primary" id="photo-save">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Toast 提示 ===== -->
+  <div id="toast" class="toast"></div>
+
+  <script src="photos.js"></script>
+</body>
+</html>

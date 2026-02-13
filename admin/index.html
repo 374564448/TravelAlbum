@@ -31,32 +31,18 @@
     <!-- 顶部导航 -->
     <header class="top-bar">
       <div class="top-bar-left">
-        <h2 id="page-title">地点管理</h2>
-        <button id="back-btn" class="btn btn-ghost" style="display:none;">← 返回</button>
+        <h2>地点管理</h2>
       </div>
       <div class="top-bar-right">
         <button id="logout-btn" class="btn btn-ghost">退出登录</button>
       </div>
     </header>
 
-    <!-- 地点列表视图 -->
-    <div id="locations-view" class="view active">
-      <div class="toolbar">
-        <button id="add-location-btn" class="btn btn-primary">+ 新增地点</button>
-      </div>
-      <div id="locations-list" class="card-grid"></div>
+    <!-- 地点列表 -->
+    <div class="toolbar">
+      <button id="add-location-btn" class="btn btn-primary">+ 新增地点</button>
     </div>
-
-    <!-- 照片管理视图 -->
-    <div id="photos-view" class="view">
-      <div class="toolbar">
-        <div class="upload-area" id="upload-area">
-          <input type="file" id="photo-upload" multiple accept="image/*" hidden>
-          <p>将照片拖拽到此处，或 <button class="btn btn-primary btn-sm" id="upload-btn">点击上传</button></p>
-        </div>
-      </div>
-      <div id="photos-list" class="photo-grid"></div>
-    </div>
+    <div id="locations-list" class="card-grid"></div>
 
   </div>
 
@@ -80,26 +66,6 @@
       <div class="modal-actions">
         <button class="btn btn-ghost" id="loc-cancel">取消</button>
         <button class="btn btn-primary" id="loc-save">保存</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== 模态框：编辑照片 ===== -->
-  <div id="photo-modal" class="modal">
-    <div class="modal-backdrop"></div>
-    <div class="modal-body">
-      <h3>编辑照片</h3>
-      <div class="form-group">
-        <label>照片标题</label>
-        <input type="text" id="photo-title" placeholder="照片标题（可选）">
-      </div>
-      <div class="form-group">
-        <label>照片描述</label>
-        <textarea id="photo-desc" rows="3" placeholder="照片描述（可选）"></textarea>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-ghost" id="photo-cancel">取消</button>
-        <button class="btn btn-primary" id="photo-save">保存</button>
       </div>
     </div>
   </div>
