@@ -462,34 +462,85 @@ window.confirmDeleteLocation = async function(id, title) {
 
 function initDragSort(container, selector, onSort) {
   let dragItem = null;
+  let orderBeforeDrag = null;
 
-  container.querySelectorAll(selector).forEach(item => {
-    item.addEventListener('contextmenu', (e) => { if (!e.target.closest('button')) e.preventDefault(); });
-    item.addEventListener('dragstart', (e) => {
+  function finishDrag() {
+    if (!dragItem) return;
+    dragItem.classList.remove('dragging');
+    dragItem.style.pointerEvents = '';
+    var ids = [...container.querySelectorAll(selector)].map(function(el) { return el.dataset.id; });
+    var changed = !orderBeforeDrag || ids.length !== orderBeforeDrag.length || ids.some(function(id, i) { return id !== orderBeforeDrag[i]; });
+    dragItem = null;
+    orderBeforeDrag = null;
+    if (changed) onSort(ids);
+  }
+
+  container.querySelectorAll(selector).forEach(function(item) {
+    item.addEventListener('contextmenu', function(e) { if (!e.target.closest('button')) e.preventDefault(); });
+
+    item.addEventListener('dragstart', function(e) {
       dragItem = item;
+      orderBeforeDrag = [...container.querySelectorAll(selector)].map(function(el) { return el.dataset.id; });
       item.classList.add('dragging');
       e.dataTransfer.effectAllowed = 'move';
     });
+    item.addEventListener('dragend', finishDrag);
 
-    item.addEventListener('dragend', () => {
-      if (dragItem) dragItem.classList.remove('dragging');
-      dragItem = null;
-      const ids = [...container.querySelectorAll(selector)].map(el => el.dataset.id);
-      onSort(ids);
-    });
-
-    item.addEventListener('dragover', (e) => {
+    item.addEventListener('dragover', function(e) {
       e.preventDefault();
       e.dataTransfer.dropEffect = 'move';
       if (!dragItem || dragItem === item) return;
-      const rect = item.getBoundingClientRect();
-      const mid = rect.left + rect.width / 2;
+      var rect = item.getBoundingClientRect();
+      var mid = rect.left + rect.width / 2;
       if (e.clientX < mid) {
         container.insertBefore(dragItem, item);
       } else {
         container.insertBefore(dragItem, item.nextSibling);
       }
     });
+
+    // 移动端触摸拖拽
+    item.addEventListener('touchstart', function(e) {
+      if (e.touches.length !== 1) return;
+      var startX = e.touches[0].clientX;
+      var startY = e.touches[0].clientY;
+      var moved = false;
+      dragItem = item;
+      orderBeforeDrag = [...container.querySelectorAll(selector)].map(function(el) { return el.dataset.id; });
+      item.classList.add('dragging');
+      item.style.pointerEvents = 'none';
+
+      function onTouchMove(ev) {
+        if (!dragItem || ev.touches.length !== 1) return;
+        var t = ev.touches[0];
+        if (!moved) {
+          var dx = Math.abs(t.clientX - startX);
+          var dy = Math.abs(t.clientY - startY);
+          if (dx < 10 && dy < 10) return;
+          moved = true;
+        }
+        ev.preventDefault();
+        var under = document.elementFromPoint(t.clientX, t.clientY);
+        var target = under ? under.closest(selector) : null;
+        if (!target || target === dragItem) return;
+        var rect = target.getBoundingClientRect();
+        var mid = rect.left + rect.width / 2;
+        if (t.clientX < mid) {
+          container.insertBefore(dragItem, target);
+        } else {
+          container.insertBefore(dragItem, target.nextSibling);
+        }
+      }
+      function onTouchEnd() {
+        document.removeEventListener('touchmove', onTouchMove, { passive: false });
+        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchcancel', onTouchEnd);
+        finishDrag();
+      }
+      document.addEventListener('touchmove', onTouchMove, { passive: false });
+      document.addEventListener('touchend', onTouchEnd, { once: true });
+      document.addEventListener('touchcancel', onTouchEnd, { once: true });
+    }, { passive: true });
   });
 }
 
