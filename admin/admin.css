@@ -503,10 +503,12 @@ body {
   border-color: var(--primary);
 }
 
+/* 与列表 .location-card .card-cover 比例一致：23:34 */
 .cover-upload-area img {
   width: 100%;
-  height: 100%;
+  aspect-ratio: 23 / 34;
   object-fit: cover;
+  display: block;
 }
 
 .cover-upload-area p {
