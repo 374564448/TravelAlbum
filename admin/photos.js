@@ -136,6 +136,19 @@ function renderPhotos(photos) {
 
 // ===== 照片上传 =====
 
+const uploadProgressPanel = document.getElementById('upload-progress');
+const progressSummary = document.getElementById('progress-summary');
+const progressTotalFill = document.getElementById('progress-total-fill');
+const progressDetail = document.getElementById('progress-detail');
+const progressToggle = document.getElementById('progress-toggle');
+
+let isUploading = false;
+
+// 折叠/展开明细
+progressToggle.addEventListener('click', () => {
+  uploadProgressPanel.classList.toggle('expanded');
+});
+
 uploadBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   photoUploadInput.click();
@@ -147,7 +160,7 @@ uploadArea.addEventListener('click', () => {
 
 photoUploadInput.addEventListener('change', () => {
   if (photoUploadInput.files.length > 0) {
-    uploadPhotos(photoUploadInput.files);
+    uploadPhotos([...photoUploadInput.files]);
   }
 });
 
@@ -170,28 +183,161 @@ uploadArea.addEventListener('drop', (e) => {
   }
 });
 
-async function uploadPhotos(files) {
-  const formData = new FormData();
-  for (const file of files) {
+// 单张上传（XHR，支持 progress 事件）
+function uploadSingleFile(file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
     formData.append('photos', file);
-  }
 
-  try {
-    uploadBtn.disabled = true;
-    showToast(`正在上传 ${files.length} 张照片...`, 10000);
+    xhr.open('POST', `${API}/locations/${locationId}/photos`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
-    await request(`/locations/${locationId}/photos`, {
-      method: 'POST',
-      body: formData
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        file._progress = pct;
+        updateProgressUI();
+      }
     });
 
-    showToast('上传成功');
-    photoUploadInput.value = '';
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        file._progress = 100;
+        file._done = true;
+        resolve();
+      } else if (xhr.status === 401) {
+        token = '';
+        localStorage.removeItem('admin_token');
+        goBack();
+        reject(new Error('未登录'));
+      } else {
+        file._error = true;
+        try {
+          const data = JSON.parse(xhr.responseText);
+          reject(new Error(data.error || '上传失败'));
+        } catch {
+          reject(new Error('上传失败'));
+        }
+      }
+      updateProgressUI();
+    });
+
+    xhr.addEventListener('error', () => {
+      file._error = true;
+      updateProgressUI();
+      reject(new Error('网络错误'));
+    });
+
+    xhr.send(formData);
+  });
+}
+
+let uploadFileList = []; // 当前上传队列
+
+function updateProgressUI() {
+  const total = uploadFileList.length;
+  const doneCount = uploadFileList.filter(f => f._done).length;
+  const errorCount = uploadFileList.filter(f => f._error).length;
+  const finishedCount = doneCount + errorCount;
+
+  // 总进度 = 所有文件进度的平均值
+  const totalProgress = total > 0
+    ? Math.round(uploadFileList.reduce((sum, f) => sum + (f._progress || 0), 0) / total)
+    : 0;
+
+  // 摘要文字
+  if (finishedCount === total) {
+    if (errorCount > 0) {
+      progressSummary.textContent = `上传完成 ${doneCount}/${total}（${errorCount} 张失败）`;
+      progressTotalFill.className = 'progress-fill error';
+    } else {
+      progressSummary.textContent = `上传完成 ${doneCount}/${total}`;
+      progressTotalFill.className = 'progress-fill done';
+    }
+  } else {
+    progressSummary.textContent = `上传中 ${doneCount}/${total}`;
+    progressTotalFill.className = 'progress-fill';
+  }
+
+  progressTotalFill.style.width = totalProgress + '%';
+
+  // 明细列表
+  progressDetail.innerHTML = uploadFileList.map((f, i) => {
+    let statusClass, statusText;
+    if (f._done) {
+      statusClass = 'status-done';
+      statusText = '已完成 ✓';
+    } else if (f._error) {
+      statusClass = 'status-error';
+      statusText = '失败 ✗';
+    } else if (f._progress > 0) {
+      statusClass = 'status-uploading';
+      statusText = `${f._progress}%`;
+    } else {
+      statusClass = 'status-waiting';
+      statusText = '待上传';
+    }
+    return `<div class="progress-item">
+      <span class="progress-filename" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</span>
+      <span class="progress-status ${statusClass}">${statusText}</span>
+    </div>`;
+  }).join('');
+}
+
+async function uploadPhotos(files) {
+  if (isUploading) {
+    showToast('有上传任务进行中，请等待完成');
+    return;
+  }
+
+  isUploading = true;
+  uploadBtn.disabled = true;
+  uploadFileList = files;
+
+  // 初始化每个文件的进度状态
+  files.forEach(f => { f._progress = 0; f._done = false; f._error = false; });
+
+  // 显示进度面板并展开
+  uploadProgressPanel.style.display = '';
+  uploadProgressPanel.classList.add('expanded');
+  updateProgressUI();
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const file of files) {
+    try {
+      await uploadSingleFile(file);
+      successCount++;
+    } catch (e) {
+      errorCount++;
+      console.error(`上传 ${file.name} 失败:`, e.message);
+    }
+  }
+
+  // 完成
+  updateProgressUI();
+  photoUploadInput.value = '';
+  isUploading = false;
+  uploadBtn.disabled = false;
+
+  if (successCount > 0) {
+    showToast(errorCount > 0
+      ? `上传完成：${successCount} 张成功，${errorCount} 张失败`
+      : `全部上传成功（${successCount} 张）`
+    );
     loadPhotos();
-  } catch (e) {
-    showToast('上传失败: ' + e.message);
-  } finally {
-    uploadBtn.disabled = false;
+  } else {
+    showToast('全部上传失败');
+  }
+
+  // 3 秒后自动隐藏面板（如果没有错误）
+  if (errorCount === 0) {
+    setTimeout(() => {
+      uploadProgressPanel.style.display = 'none';
+      uploadProgressPanel.classList.remove('expanded');
+    }, 3000);
   }
 }
 

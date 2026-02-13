@@ -478,24 +478,56 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ===== 上传进度 ===== */
-.upload-progress {
-  margin: 16px 24px;
-  padding: 16px;
+/* ===== 上传进度面板 ===== */
+.upload-progress-panel {
+  margin: 0 24px 16px;
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
-.upload-progress .progress-bar {
+.upload-progress-panel .progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.upload-progress-panel .progress-header:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+.upload-progress-panel .progress-summary {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.upload-progress-panel .progress-toggle-icon {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: transform 0.2s;
+}
+
+.upload-progress-panel.expanded .progress-toggle-icon {
+  transform: rotate(180deg);
+}
+
+.upload-progress-panel .progress-total {
+  padding: 0 16px 12px;
+}
+
+.upload-progress-panel .progress-bar {
   height: 6px;
   background: var(--border);
   border-radius: 3px;
   overflow: hidden;
-  margin-top: 8px;
 }
 
-.upload-progress .progress-fill {
+.upload-progress-panel .progress-fill {
   height: 100%;
   background: var(--primary);
   border-radius: 3px;
@@ -503,9 +535,74 @@ body {
   width: 0;
 }
 
-.upload-progress .progress-text {
+.upload-progress-panel .progress-fill.done {
+  background: #22c55e;
+}
+
+.upload-progress-panel .progress-fill.error {
+  background: var(--danger);
+}
+
+.upload-progress-panel .progress-detail {
+  display: none;
+  border-top: 1px solid var(--border);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.upload-progress-panel.expanded .progress-detail {
+  display: block;
+}
+
+.progress-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
   font-size: 13px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+
+.progress-item:last-child {
+  border-bottom: none;
+}
+
+.progress-item .progress-filename {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 12px;
+  color: var(--text);
+}
+
+.progress-item .progress-status {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.progress-status.status-waiting {
   color: var(--text-secondary);
+  background: rgba(0,0,0,0.04);
+}
+
+.progress-status.status-uploading {
+  color: var(--primary);
+  background: rgba(79, 110, 247, 0.1);
+}
+
+.progress-status.status-done {
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.progress-status.status-error {
+  color: var(--danger);
+  background: rgba(231, 76, 90, 0.1);
 }
 
 /* ===== 空状态 ===== */
@@ -595,6 +692,9 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     padding: 0 12px 12px;
+  }
+  .upload-progress-panel {
+    margin: 0 12px 10px;
   }
   .toolbar {
     padding: 12px;
