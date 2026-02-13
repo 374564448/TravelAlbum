@@ -529,7 +529,6 @@ function initDragSort(container, selector, onSort) {
     item.addEventListener('touchstart', function(e) {
       if (e.touches.length !== 1) return;
       if (e.target.closest('button')) return;
-      e.preventDefault(); // 禁止系统长按菜单（如图片椭圆/保存菜单）
       var longPressFired = false;
       var longPressTimer = null;
       var ghost = null;
@@ -595,7 +594,7 @@ function initDragSort(container, selector, onSort) {
       document.addEventListener('touchmove', onTouchMove, { passive: false });
       document.addEventListener('touchend', onTouchEnd, { once: true });
       document.addEventListener('touchcancel', onTouchEnd, { once: true });
-    }, { passive: false });
+    }, { passive: true });
   });
 }
 

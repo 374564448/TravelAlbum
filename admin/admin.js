@@ -319,6 +319,10 @@ locCoverInput.addEventListener('change', () => {
   reader.onload = (e) => {
     openCropper(e.target.result);
   };
+  reader.onerror = () => {
+    showToast('读取文件失败');
+    locCoverInput.value = '';
+  };
   reader.readAsDataURL(file);
 });
 
@@ -332,6 +336,11 @@ function openCropper(imageSrc) {
 
   cropImage.src = imageSrc;
   cropModal.classList.add('active');
+  cropImage.onerror = () => {
+    showToast('图片加载失败');
+    closeCropper();
+    locCoverInput.value = '';
+  };
 
   cropImage.onload = () => {
     const natW = cropImage.naturalWidth;
@@ -503,7 +512,6 @@ function initDragSort(container, selector, onSort) {
     item.addEventListener('touchstart', function(e) {
       if (e.touches.length !== 1) return;
       if (e.target.closest('button')) return;
-      e.preventDefault(); // 禁止系统长按菜单（如图片椭圆/保存菜单）
       var longPressFired = false;
       var longPressTimer = null;
       var ghost = null;
@@ -569,7 +577,7 @@ function initDragSort(container, selector, onSort) {
       document.addEventListener('touchmove', onTouchMove, { passive: false });
       document.addEventListener('touchend', onTouchEnd, { once: true });
       document.addEventListener('touchcancel', onTouchEnd, { once: true });
-    }, { passive: false });
+    }, { passive: true });
   });
 }
 
