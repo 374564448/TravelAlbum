@@ -562,7 +562,7 @@ function render() {
 
 var sakuraAnimating = true;
 var sakuraIsMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-var sakuraScale = sakuraIsMobile ? 0.5 : 1.0; // 移动端半分辨率渲染
+var sakuraScale = 1.0; // 全终端高清渲染（含移动端）
 var sakuraFrameSkip = 0; // 跳帧计数器
 var sakuraTargetInterval = 1000 / 30; // 目标 30fps
 var sakuraLastRenderTime = 0;
