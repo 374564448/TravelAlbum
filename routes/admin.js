@@ -72,9 +72,21 @@ router.put('/locations/sort', (req, res) => {
 
 // ===== 照片排序（必须在 :id 参数路由之前） =====
 router.put('/photos/sort', (req, res) => {
-  const { ids } = req.body;
-  if (!Array.isArray(ids)) return res.status(400).json({ error: '参数错误' });
-  db.updatePhotoSort(ids);
+  const { location_id: locationId, ids } = req.body;
+  if (!Array.isArray(ids) || locationId == null) {
+    return res.status(400).json({ error: '请提供 location_id 和 ids' });
+  }
+  const locationIdNum = parseInt(locationId, 10);
+  if (isNaN(locationIdNum)) return res.status(400).json({ error: '地点 ID 无效' });
+
+  const allowedIds = db.getPhotoIdsByLocation(locationIdNum);
+  const idSet = new Set(allowedIds);
+  const validIds = ids.map((id) => parseInt(id, 10)).filter((id) => !isNaN(id));
+  if (validIds.length !== allowedIds.length || validIds.some((id) => !idSet.has(id))) {
+    return res.status(400).json({ error: '排序的图片必须全部属于当前地点' });
+  }
+
+  db.updatePhotoSort(validIds);
   res.json({ message: '排序更新成功' });
 });
 

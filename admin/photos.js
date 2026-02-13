@@ -203,7 +203,7 @@ function renderPhotos(photos) {
     try {
       await request('/photos/sort', {
         method: 'PUT',
-        body: JSON.stringify({ ids: orderedIds.map(Number) })
+        body: JSON.stringify({ location_id: locationId, ids: orderedIds.map(Number) })
       });
       showToast('排序已保存');
     } catch (e) {
